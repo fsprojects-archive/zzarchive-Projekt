@@ -1,0 +1,23 @@
+type project
+owners
+    Karl Nilsson and Robin Neatherway
+authors 
+    Karl Nilsson and Robin Neatherway
+projectUrl
+    http://github.com/kjnilsson/Projekt
+iconUrl
+    https://raw.githubusercontent.com/kjnilsson/Projekt/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/kjnilsson/Projekt/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    f# build
+summary
+    A command line tool for creating and updating F# project files
+description
+    A command line tool for creating and updating F# project files
+
+
