@@ -4,6 +4,8 @@
 #vim
 *.swp
 
+#osx
+.DS_Store
 #paket
 .paket/paket.exe
 
