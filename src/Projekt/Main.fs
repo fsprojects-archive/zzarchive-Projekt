@@ -47,6 +47,12 @@ module Types =
         | V4_0
         | V4_5
         | V4_5_1
+    with 
+        override x.ToString () =
+            match x with
+            | V4_0 -> "4.0"
+            | V4_5 -> "4.5"
+            | V4_5_1 -> "4.5.1"
 
     type ProjectInitData =
         { ProjPath: string
@@ -76,10 +82,67 @@ module Types =
         | MoveFile of FileData * Direction * Repeat
         | Error
 
+module Template = 
+    open System.IO
+    open System.Xml.Linq
+
+    let (</>) a b = Path.Combine(a,b)
+    let xname s = XName.Get s
+    let copy src dst =
+        File.Copy(src, dst)
+
+    let replace (o: string) n (s : string) =
+        s.Replace(o, n)
+
+    let copyToTarget templatesDir (data : ProjectInitData) =
+        let name = Path.GetFileNameWithoutExtension data.ProjPath
+        let targetDir = Path.GetDirectoryName data.ProjPath
+        let templateDir = templatesDir </> sprintf "%A" data.Template
+
+        if Directory.Exists targetDir then
+            failwith "target directory already exists"
+        
+        let _ = Directory.CreateDirectory targetDir 
+        let p = templateDir </> (sprintf "%A.fsproj" data.Template)
+        copy p (targetDir </> sprintf "%s.fsproj" name)
+
+        let files = 
+            Directory.GetFiles templateDir 
+            |> Seq.filter (fun f -> Path.GetExtension f <> ".fsproj")
+
+        for file in files do
+            let name = Path.GetFileName file
+            copy file (targetDir </> name)
+
+
+    let update (data: ProjectInitData) =
+        let name = Path.GetFileNameWithoutExtension data.ProjPath
+        let targetDir = Path.GetDirectoryName data.ProjPath
+        let guid1 = Guid.NewGuid() |> string
+        let org = "FSharp"
+        Directory.GetFiles targetDir 
+        |> Seq.map (fun f -> f, File.ReadAllText f)
+        |> Seq.map (fun (f, text) ->
+            //I am not too proud for a bit of crummy string replacement :)
+            f,  replace "$safeprojectname$" name text
+                |> replace "$targetframeworkversion$" (string data.FrameworkVersion) //TODO override ToString
+                |> replace "$guid1$" guid1 
+                |> replace "$projectname$" name 
+                |> replace "$registeredorganization$" org 
+                |> replace "$year$" (DateTime.Now.Year.ToString()) 
+                |> replace "$registeredorganization$" org )
+        |> Seq.iter (fun (f, text) ->
+            File.WriteAllText(f, text))
+
+    let init (templatesDir : string) (data : ProjectInitData) =
+        copyToTarget templatesDir data
+        update data
+        
     
 module Args =
     open System.IO
     open Nessos.UnionArgParser
+
     type private Args =
         | Template of string
         | FrameworkVersion of string
@@ -94,11 +157,24 @@ module Args =
                 | Repeat _ -> "repeat"
                 | FrameworkVersion _ -> "fxversion"
 
+    let private templateArg (res : ArgParseResults<Args>) =
+        match res.TryGetResult(<@ Template @>) with
+        | Some (ToLower "console") -> Console
+        | Some (ToLower "library") -> Library
+        | None -> Library
+        | _ -> failwith "invalid template argument specified"
+
     let private parser = UnionArgParser.Create<Args>()
 
     let private (|Options|) (args : string list) =
         let results = parser.Parse(List.toArray args)
         results
+
+    let (|FullPath|_|) (path : string) =
+        try 
+            Path.GetFullPath path |> Some
+        with
+        | _ -> None
 
     //splits the required arguments off from the options
     let split (args : string list) =
@@ -107,21 +183,20 @@ module Args =
     let parse (ToList args) : Operation =
         let required, _ = split args
         match required with
-        | ToLower "init" :: path :: Options opts -> 
-            let template = opts.TryGetResult(<@ Template @>)
-            let t =
-                match template with
-                | Some (ToLower "console") -> Console
-                | Some (ToLower "library") -> Library
-                | None -> Library
-                | _ -> failwith "invalid template argument specified"
-            Init (ProjectInitData.create(path, t))
+        | ToLower "init" :: FullPath path :: Options opts -> 
+            let template = templateArg opts
+            Init (ProjectInitData.create (path, template))
         | _ -> failwith "not implemented yet"
 
 module Main =
   [<EntryPoint>]
   let main argv =
     printfn "pre %A" argv
-    let parsedArgs = Args.parse argv
-    printfn "operation: %A parseArgs" parsedArgs
+    let op = Args.parse argv
+
+    match op with
+    | Init data ->
+        Template.init (IO.Path.GetFullPath "templates") data
+    | _ -> failwith "not implemented yet"
+    printfn "operation: %A parseArgs" op
     0

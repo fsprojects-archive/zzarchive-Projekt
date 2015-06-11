@@ -16,8 +16,12 @@ let args = [|"project"; "--template"; "console" |]
 let parser = UnionArgParser.Create<Args>()
 
 let results = parser.Parse(args)
+
+
 results.GetAllResults()
 
+open System.IO
+Path.GetDirectoryName "/test/file"
 (*
 projekt (project|file) (create|add|remove|reference|move) {Name} {--path=/path} {--template=(library|console)} {--target=/path/hello.fsproj} {--solution=path/to/sln} --direction=(down|up)
 

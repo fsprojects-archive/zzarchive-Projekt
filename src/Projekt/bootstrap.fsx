@@ -1,4 +1,5 @@
-#r "System.Xml.Linq.dll"
+#r "System.Xml"
+#r "System.Xml.Linq"
 open System
 open System.IO
 open System.Xml.Linq
