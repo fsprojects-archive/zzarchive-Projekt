@@ -4,6 +4,9 @@
 #vim
 *.swp
 
+#tests
+TestResult.xml
+
 # User-specific files
 *.suo
 *.user

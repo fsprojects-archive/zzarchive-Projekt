@@ -26,6 +26,12 @@ let org = "MyOrganisation"
 
 let templateFile template file =
     __SOURCE_DIRECTORY__ </> "templates" </> template </> file 
+let (|Range|_|) range c =
+    List.tryFind ((=) c) range
+let r  =['a' .. 'z']
+let s = ""
+match s.[0] with
+| Range r _ -> ()
 
 let templateToTarget template target projectName =
     let t = Directory.CreateDirectory (target </> projectName)
