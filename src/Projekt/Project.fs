@@ -1,7 +1,4 @@
-#load "Util.fs"
-#load "Types.fs"
-#r "System.Xml"
-#r "System.Xml.Linq"
+module Projekt.Project
 
 open System
 open System.Xml.Linq
@@ -35,36 +32,29 @@ let (|Element|_|) name (xe : XElement) =
     | null -> None 
     | e -> Some e
 
-//getters
-let projectGuid = 
+//queries
+let internal projectGuid = 
     function
     | Descendant "ProjectGuid" (Value (Guid pg)) -> 
         Some pg 
     | _ -> None
 
-let projectName = 
+let internal projectName = 
     function
     | Descendant "Name" (Value name) -> 
         Some name 
     | _ -> None
 
-let projectReferenceItemGroup =
+let internal projectReferenceItemGroup =
     function
     | Descendant "ProjectReference" e -> 
         e.Parent |> Some
     | _ -> None
 
-let projRefT = """
-    <ProjectReference Include="..\..\src\Projekt\Projekt.fsproj">
-      <Name>Projekt</Name>
-      <Project>{165a6853-05ed-4f03-a7b1-1c84d4f01bf5}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    """
-
-let addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
+let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
     match projectReferenceItemGroup el with
     | Some prig ->
+        //TODO check to ensure duplicate ProjectReferences aren't added
         prig.Add(
             xe "ProjectReference"
                 [ xa "Include" path |> box
@@ -72,14 +62,7 @@ let addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
                   xe "Project" (sprintf "{%O}" <| guid) |> box
                   xe "Private" "True" |> box ] )
         prig
-    | None -> failwith "not yet"
-
-let p = XElement.Load("Projekt.fsproj")
-let pt = XElement.Load("../../tests/Projekt.Tests/Projekt.Tests.fsproj")
-addProjRefNode "..\..\src\Project.fsproj" "Testing" (Guid.NewGuid()) pt
-pt
-
-IO.Path.GetFullPath "Project.fsproj"
+    | None -> failwith "TODO add ItemGroup node for add reference"
 
 let addReference (project : string) (reference : string) =
     let relPath = Projekt.Util.makeRelativePath project reference
@@ -89,8 +72,6 @@ let addReference (project : string) (reference : string) =
     let guid = projectGuid reference
     addProjRefNode relPath name.Value guid.Value proj
     
-    
-
 
 
 

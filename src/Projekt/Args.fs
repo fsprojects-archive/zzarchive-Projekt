@@ -47,4 +47,8 @@ let parse (ToList args) : Operation =
     | ToLower "init" :: FullPath path :: Options opts -> 
         let template = templateArg opts
         Init (ProjectInitData.create (path, template))
+    | [ToLower "newfile"; FullPath project; FullPath file] -> 
+        NewFile { ProjPath = project; FilePath = file }
+    | [ToLower "reference"; FullPath project; FullPath reference] -> 
+        Reference { ProjPath = project; Reference = reference }
     | _ -> failwith "not implemented yet"

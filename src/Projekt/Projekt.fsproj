@@ -52,6 +52,7 @@
     <Compile Include="Template.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="XmlLinqHelpers.fs" />
+    <Compile Include="Project.fs" />
     <Compile Include="FSharpProject.fs" />
     <Compile Include="Main.fs" />
     <None Include="bootstrap.fsx" />

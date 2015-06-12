@@ -36,7 +36,7 @@ with
 
 type ProjectReferenceData =
     { ProjPath: string
-      Target: string }
+      Reference: string }
 
 type FileData =
     { ProjPath: string
