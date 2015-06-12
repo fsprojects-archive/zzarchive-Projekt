@@ -61,7 +61,7 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
                   xe "Name" name |> box
                   xe "Project" (sprintf "{%O}" <| guid) |> box
                   xe "Private" "True" |> box ] )
-        prig
+        el
     | None -> failwith "TODO add ItemGroup node for add reference"
 
 let addReference (project : string) (reference : string) =
