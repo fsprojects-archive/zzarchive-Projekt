@@ -64,22 +64,22 @@ let internal projectReferenceItemGroup =
     | _ -> None
 
 let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
-    let add (el: XElement) =
-        el.Add(
-            xe "ProjectReference"
-                [ xa "Include" path |> box
-                  xe "Name" name |> box
-                  xe "Project" (sprintf "{%O}" <| guid) |> box
-                  xe "Private" "True" |> box ] )
+    let pref =
+        xe "ProjectReference"
+            [ xa "Include" path |> box
+              xe "Name" name |> box
+              xe "Project" (sprintf "{%O}" <| guid) |> box
+              xe "Private" "True" |> box ]
 
     match projectReferenceItemGroup el with
     | Some prig ->
         //TODO check to ensure duplicate ProjectReferences aren't added
-        add prig
+        prig.Add pref
         el
     | None -> 
-        let ig = itemGroup el |> Option.get
-        add ig
+        let firstig = itemGroup el |> Option.get
+        let ig = xe "ItemGroup" pref
+        firstig.AddAfterSelf ig
         el
 
 let addReference (project : string) (reference : string) =
