@@ -84,10 +84,10 @@ module Types =
 
 module Template = 
     open System.IO
-    open System.Xml.Linq
+    //open System.Xml.Linq
 
     let (</>) a b = Path.Combine(a,b)
-    let xname s = XName.Get s
+    
     let copy src dst =
         File.Copy(src, dst)
 
@@ -137,7 +137,6 @@ module Template =
     let init (templatesDir : string) (data : ProjectInitData) =
         copyToTarget templatesDir data
         update data
-        
     
 module Args =
     open System.IO
@@ -186,6 +185,8 @@ module Args =
         | ToLower "init" :: FullPath path :: Options opts -> 
             let template = templateArg opts
             Init (ProjectInitData.create (path, template))
+        | [ToLower "newfile"; FullPath project; FullPath file] -> 
+            NewFile { ProjPath = project; FilePath = file }
         | _ -> failwith "not implemented yet"
 
 module Main =
@@ -197,6 +198,10 @@ module Main =
     match op with
     | Init data ->
         Template.init (IO.Path.GetFullPath "templates") data
+    | NewFile data ->
+        let p = new FSharpProject(data.ProjPath)
+        p.AddFile data.FilePath
+        p.Flush()
     | _ -> failwith "not implemented yet"
     printfn "operation: %A parseArgs" op
     0
