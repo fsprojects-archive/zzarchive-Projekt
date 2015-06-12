@@ -64,7 +64,7 @@ let internal projectReferenceItemGroup =
     | _ -> None
 
 let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
-    let pref =
+    let projRef =
         xe "ProjectReference"
             [ xa "Include" path |> box
               xe "Name" name |> box
@@ -74,30 +74,24 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
     match projectReferenceItemGroup el with
     | Some prig ->
         //TODO check to ensure duplicate ProjectReferences aren't added
-        prig.Add pref
+        prig.Add projRef
         el
     | None -> 
-        let firstig = itemGroup el |> Option.get
-        let ig = xe "ItemGroup" pref
-        firstig.AddAfterSelf ig
+        let ig = xe "ItemGroup" projRef
+        match itemGroup el with
+        | Some first ->
+            first.AddAfterSelf ig
+        | None -> //no ItemGroups!
+            el.Add ig
         el
 
 let addReference (project : string) (reference : string) =
     let relPath = Projekt.Util.makeRelativePath project reference
-    printfn "relpath: %s" relPath
     let proj = XElement.Load project
     let reference = XElement.Load reference
-    printfn "loaded"
     let name = 
         match projectName reference with
         | Some name -> name
         | None -> assemblyName reference |> Option.get
-    printfn "name: %A" name
     let guid = projectGuid reference
-    printfn "guid: %A" guid
     addProjRefNode relPath name guid.Value proj
-    
-
-
-
-
