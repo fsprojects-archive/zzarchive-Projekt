@@ -1,5 +1,4 @@
 module Projekt.Main
-
 (*
 projekt (init|reference|newfile|addfile/addfile) /path/to/project {--template=(library|console)} {--solution=path/to/sln} --direction=(down|up) --repeat={int} --frameworkversion=(4.0|4.5|4.5.1)
 

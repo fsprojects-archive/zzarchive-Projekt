@@ -32,6 +32,11 @@ let (|Element|_|) name (xe : XElement) =
     | null -> None 
     | e -> Some e
 
+let (|Attribute|_|) name (xe : XElement) =
+    match xe.Attribute (xn name) with
+    | null -> None 
+    | a -> Some a
+
 //queries
 let internal projectGuid = 
     function
@@ -63,7 +68,13 @@ let internal projectReferenceItemGroup =
         e.Parent |> Some
     | _ -> None
 
-let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
+let hasProjectReferenceWithInclude incl =
+    function
+    | Descendant "ProjectReference" (Attribute "Include" a) when a.Value = incl -> 
+        true
+    | _ -> false
+
+let addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
     let projRef =
         xe "ProjectReference"
             [ xa "Include" path |> box
@@ -72,10 +83,10 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
               xe "Private" "True" |> box ]
 
     match projectReferenceItemGroup el with
+    | Some _ when hasProjectReferenceWithInclude path el -> 
+        ()
     | Some prig ->
-        //TODO check to ensure duplicate ProjectReferences aren't added
         prig.Add projRef
-        el
     | None -> 
         let ig = xe "ItemGroup" projRef
         match itemGroup el with
@@ -83,7 +94,7 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
             first.AddAfterSelf ig
         | None -> //no ItemGroups!
             el.Add ig
-        el
+    el
 
 let addReference (project : string) (reference : string) =
     let relPath = Projekt.Util.makeRelativePath project reference
