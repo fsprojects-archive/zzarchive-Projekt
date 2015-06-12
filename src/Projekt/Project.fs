@@ -45,6 +45,18 @@ let internal projectName =
         Some name 
     | _ -> None
 
+let internal assemblyName = 
+    function
+    | Descendant "AssemblyName" (Value name) -> 
+        Some name 
+    | _ -> None
+
+let internal itemGroup = 
+    function
+    | Descendant "ItemGroup" el -> 
+        Some el 
+    | _ -> None
+
 let internal projectReferenceItemGroup =
     function
     | Descendant "ProjectReference" e -> 
@@ -52,25 +64,38 @@ let internal projectReferenceItemGroup =
     | _ -> None
 
 let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
-    match projectReferenceItemGroup el with
-    | Some prig ->
-        //TODO check to ensure duplicate ProjectReferences aren't added
-        prig.Add(
+    let add (el: XElement) =
+        el.Add(
             xe "ProjectReference"
                 [ xa "Include" path |> box
                   xe "Name" name |> box
                   xe "Project" (sprintf "{%O}" <| guid) |> box
                   xe "Private" "True" |> box ] )
+
+    match projectReferenceItemGroup el with
+    | Some prig ->
+        //TODO check to ensure duplicate ProjectReferences aren't added
+        add prig
         el
-    | None -> failwith "TODO add ItemGroup node for add reference"
+    | None -> 
+        let ig = itemGroup el |> Option.get
+        add ig
+        el
 
 let addReference (project : string) (reference : string) =
     let relPath = Projekt.Util.makeRelativePath project reference
+    printfn "relpath: %s" relPath
     let proj = XElement.Load project
     let reference = XElement.Load reference
-    let name = projectName reference
+    printfn "loaded"
+    let name = 
+        match projectName reference with
+        | Some name -> name
+        | None -> assemblyName reference |> Option.get
+    printfn "name: %A" name
     let guid = projectGuid reference
-    addProjRefNode relPath name.Value guid.Value proj
+    printfn "guid: %A" guid
+    addProjRefNode relPath name guid.Value proj
     
 
 

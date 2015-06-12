@@ -6,6 +6,7 @@
 
 #tests
 TestResult.xml
+testing/
 
 # User-specific files
 *.suo
