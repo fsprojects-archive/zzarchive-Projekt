@@ -24,6 +24,8 @@ projekt movefile /path/to/project --direction=up --n=3 //add file to project - c
 
 open System
 
+        | [ToLower "newfile"; FullPath project; FullPath file] -> 
+            NewFile { ProjPath = project; FilePath = file }
 [<EntryPoint>]
 let main argv =
     printfn "pre %A" argv
@@ -32,6 +34,10 @@ let main argv =
     match op with
     | Init data ->
         Template.init "templates" data
+    | NewFile data ->
+        let p = new FSharpProject(data.ProjPath)
+        p.AddFile data.FilePath
+        p.Flush()
     | _ -> failwith "not implemented yet"
     printfn "operation: %A parseArgs" op
     0
