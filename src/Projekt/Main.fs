@@ -14,11 +14,9 @@ projekt init /path/to/new/fsproj --template=library //creates a new project but 
 
 projekt reference /path/to/target {thingtoreference} //references project or binary
 
-projekt newfile /path/to/project {FileName} //add file to project - could template files?
+projekt addfile /path/to/project /path/to/file //add file to project (create if not exists) - could template files?
 
-projekt addfile /path/to/project /path/to/file //add file to project - could template files?
-
-projekt movefile /path/to/project --direction=up --n=3 //add file to project - could template files?
+projekt movefile /path/to/project --direction=up --n=3 //adjust file position
 
 """
 
@@ -32,10 +30,16 @@ let main argv =
     match op with
     | Init data ->
         Template.init "templates" data
-    | NewFile data ->
-        let p = new FSharpProject(data.ProjPath)
-        p.AddFile data.FilePath
-        p.Flush()
+    | AddFile data ->
+        if not (IO.File.Exists data.FilePath) then
+            (IO.File.Create data.FilePath).Close()
+        let el = Project.addFile data.ProjPath data.FilePath
+        el.Save(data.ProjPath)
+    | DelFile data ->
+        if not (IO.File.Exists data.FilePath) then
+            (IO.File.Create data.FilePath).Close()
+        let el = Project.addFile data.ProjPath data.FilePath
+        el.Save(data.ProjPath)
     | Reference data ->
         let el = Project.addReference data.ProjPath data.Reference
         el.Save(data.ProjPath)
