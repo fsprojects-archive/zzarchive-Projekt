@@ -68,13 +68,13 @@ let internal projectReferenceItemGroup =
         e.Parent |> Some
     | _ -> None
 
-let hasProjectReferenceWithInclude incl =
+let internal hasProjectReferenceWithInclude incl =
     function
     | Descendant "ProjectReference" (Attribute "Include" a) when a.Value = incl -> 
         true
     | _ -> false
 
-let addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
+let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
     let projRef =
         xe "ProjectReference"
             [ xa "Include" path |> box
