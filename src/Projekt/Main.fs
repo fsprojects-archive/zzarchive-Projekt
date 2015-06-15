@@ -1,6 +1,6 @@
 module Projekt.Main
-(*
-projekt (init|reference|newfile|addfile/addfile) /path/to/project {--template=(library|console)} {--solution=path/to/sln} --direction=(down|up) --repeat={int} --frameworkversion=(4.0|4.5|4.5.1)
+let help = """
+projekt (init|reference|newfile|addfile|renamefile) /path/to/project {--template=(library|console)} {--solution=path/to/sln} --direction=(down|up) --repeat={int} --frameworkversion=(4.0|4.5|4.5.1)
 
 --solution - when specificed add remove 
 --direction - for move operations
@@ -9,6 +9,7 @@ projekt (init|reference|newfile|addfile/addfile) /path/to/project {--template=(l
 --compile=(true|false) - when adding file this flag allows you to exclude it from compilation
 
 examples:
+
 projekt init /path/to/new/fsproj --template=library //creates a new project but does not add it to a solution
 
 projekt reference /path/to/target {thingtoreference} //references project or binary
@@ -19,7 +20,7 @@ projekt addfile /path/to/project /path/to/file //add file to project - could tem
 
 projekt movefile /path/to/project --direction=up --n=3 //add file to project - could template files?
 
- *)
+"""
 
 open System
 
@@ -39,5 +40,5 @@ let main argv =
         let el = Project.addReference data.ProjPath data.Reference
         el.Save(data.ProjPath)
     | _ -> failwith "not implemented yet"
-    printfn "operation: %A parseArgs" op
+
     0
