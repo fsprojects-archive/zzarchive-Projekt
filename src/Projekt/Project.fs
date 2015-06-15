@@ -142,6 +142,7 @@ let delFile (project: string) (file: string) =
     let proj = XElement.Load project
     let relpath = makeRelativePath project file
     match proj with
-    | (Descendant "Compile" (Attribute "Include" a) as e) when a.Value = relpath -> e.Remove()
+    | (Descendant "Compile" (Attribute "Include" a) as e)
+        when a.Value = relpath -> e.Remove()
     | _ -> ()
     proj
