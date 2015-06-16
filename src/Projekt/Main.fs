@@ -27,22 +27,37 @@ let main argv =
     printfn "pre %A" argv
     let op = Args.parse argv
 
+    let save (el : System.Xml.Linq.XElement) (path: string) =
+        try
+            el.Save path
+            0
+        with
+        | ex ->
+            printfn "err: failed to save %s. Message: %s" path ex.Message
+            1
+
     match op with
     | Init data ->
         Template.init "templates" data
+        0
     | AddFile data ->
         if not (IO.File.Exists data.FilePath) then
             (IO.File.Create data.FilePath).Close()
         let el = Project.addFile data.ProjPath data.FilePath
-        el.Save(data.ProjPath)
+        save el data.ProjPath
     | DelFile data ->
         if not (IO.File.Exists data.FilePath) then
             (IO.File.Create data.FilePath).Close()
         let el = Project.addFile data.ProjPath data.FilePath
-        el.Save(data.ProjPath)
+        save el data.ProjPath
     | Reference data ->
-        let el = Project.addReference data.ProjPath data.Reference
-        el.Save(data.ProjPath)
-    | _ -> failwith "not implemented yet"
+        match Project.addReference data.ProjPath data.Reference with
+        | Success el ->
+            save el  data.ProjPath
+        | Failure msg ->
+            printfn "%s" msg
+            1
+    | _ -> 
+        printfn "not implemented yet"
+        1
 
-    0

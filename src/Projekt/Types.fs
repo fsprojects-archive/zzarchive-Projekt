@@ -54,3 +54,27 @@ type Operation =
 type Result<'a> =
     | Success of 'a
     | Failure of string
+
+type ResultBuilder() =
+    member __.Return (x) =
+        Success x
+    member __.ReturnFrom (x : Result<'T>) = x
+    member __.Bind(m, f) =
+        match m with
+        | Success m -> f m
+        | Failure s -> Failure s
+
+let result = ResultBuilder()
+
+let atest =
+    async {
+        let! _ = async { return 1 }
+        let! s = async { return "" }
+        return s }
+
+let test =
+    result {
+        let! _ = Success 1
+        let!  s = Success "" 
+        return s }
+

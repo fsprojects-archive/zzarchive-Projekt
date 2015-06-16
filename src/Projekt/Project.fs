@@ -41,8 +41,8 @@ let (|Attribute|_|) name (xe : XElement) =
 let internal projectGuid = 
     function
     | Descendant "ProjectGuid" (Value (Guid pg)) -> 
-        Some pg 
-    | _ -> None
+        Success pg 
+    | _ -> Failure "err: failed to read project guid."
 
 let internal projectName = 
     function
@@ -53,8 +53,8 @@ let internal projectName =
 let internal assemblyName = 
     function
     | Descendant "AssemblyName" (Value name) -> 
-        Some name 
-    | _ -> None
+        Success name 
+    | _ -> Failure "err: failed to read assembly name."
 
 let internal itemGroup = 
     function
@@ -100,9 +100,10 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
 
     match projectReferenceItemGroup el with
     | Some _ when hasProjectReferenceWithInclude path el -> 
-        ()
+        Success el
     | Some prig ->
-        prig.Add projRef
+        prig.Add projRef 
+        Success el
     | None -> 
         let ig = xe "ItemGroup" projRef
         match itemGroup el with
@@ -110,18 +111,24 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
             first.AddAfterSelf ig
         | None -> //no ItemGroups!
             el.Add ig
-    el
+        Success el
 
-let addReference (project : string) (reference : string) =
-    let relPath = Projekt.Util.makeRelativePath project reference
-    let proj = XElement.Load project
-    let reference = XElement.Load reference
-    let name = 
-        match projectName reference with
-        | Some name -> name
-        | None -> assemblyName reference |> Option.get
-    let guid = projectGuid reference
-    addProjRefNode relPath name guid.Value proj
+let private load (path : string) =
+    try XElement.Load path |> Success
+    with
+    | ex -> Failure (sprintf "err: failed to load %s as XElement. Message: %s" path ex.Message)
+
+let addReference project reference =
+    result {
+        let relPath = Projekt.Util.makeRelativePath project reference
+        let! proj = load project
+        let! reference = load reference
+        let! name = 
+            match projectName reference with
+            | Some name -> Success name
+            | None -> assemblyName reference
+        let! guid = projectGuid reference
+        return! addProjRefNode relPath name guid proj }
 
 let addFile (project: string) (file: string) =
     let proj = XElement.Load project
