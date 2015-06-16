@@ -47,5 +47,10 @@ type Operation =
     | Reference of ProjectReferenceData
     | NewFile of FileData
     | AddFile of FileData
+    | DelFile of FileData
     | MoveFile of FileData * Direction * Repeat
     | Error
+
+type Result<'a> =
+    | Success of 'a
+    | Failure of string

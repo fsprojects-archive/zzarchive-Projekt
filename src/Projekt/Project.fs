@@ -68,7 +68,23 @@ let internal projectReferenceItemGroup =
         e.Parent |> Some
     | _ -> None
 
-let internal hasProjectReferenceWithInclude incl =
+let internal compileItemGroup =
+    function
+    | Descendant "Compile" el ->
+        Some el.Parent
+    | _ -> None  
+
+let parentOfDescendant name el =
+    match el with
+    | Descendant name el -> Some el.Parent
+    | _ -> None
+
+let hasCompileWithInclude incl =
+    function
+    | Descendant "Compile" (Attribute "Include" a) when a.Value = incl -> true
+    | _ -> false
+
+let hasProjectReferenceWithInclude incl =
     function
     | Descendant "ProjectReference" (Attribute "Include" a) when a.Value = incl -> 
         true
@@ -106,3 +122,27 @@ let addReference (project : string) (reference : string) =
         | None -> assemblyName reference |> Option.get
     let guid = projectGuid reference
     addProjRefNode relPath name guid.Value proj
+
+let addFile (project: string) (file: string) =
+    let proj = XElement.Load project
+    let relpath = makeRelativePath project file
+    if hasCompileWithInclude relpath proj then
+      proj
+    else
+      let fileEntry = xe ("Compile") (xa "Include" relpath)
+      let insertionPoint =
+        List.pick (fun f -> f proj)
+          [ parentOfDescendant "Compile"
+            parentOfDescendant "None"
+            Some ]
+      insertionPoint.Add (xe "ItemGroup" fileEntry)
+      proj
+
+let delFile (project: string) (file: string) =
+    let proj = XElement.Load project
+    let relpath = makeRelativePath project file
+    match proj with
+    | (Descendant "Compile" (Attribute "Include" a) as e)
+        when a.Value = relpath -> e.Remove()
+    | _ -> ()
+    proj
