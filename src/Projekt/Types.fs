@@ -11,6 +11,8 @@ type Direction =
 
 type Repeat = | Repeat of int
 
+type Link = | Link of Option<string>
+
 type FrameworkVersion =
     | V4_0
     | V4_5
@@ -45,8 +47,7 @@ type FileData =
 type Operation =
     | Init of ProjectInitData //project path 
     | Reference of ProjectReferenceData
-    | NewFile of FileData
-    | AddFile of FileData
+    | AddFile of FileData * Link
     | DelFile of FileData
     | MoveFile of FileData * Direction * Repeat
     | Error

@@ -130,13 +130,24 @@ let addReference project reference =
         let! guid = projectGuid reference
         return! addProjRefNode relPath name guid proj }
 
-let addFile (project: string) (file: string) =
+let addFile (project: string) (file: string) (link: Option<string>) =
     let proj = XElement.Load project
-    let relpath = makeRelativePath project file
+    let relpath =
+      if link.IsNone then
+        let target = IO.Path.GetDirectoryName project </> IO.Path.GetFileName file
+        if not (IO.File.Exists(target)) then
+          IO.File.Copy(file, target)
+        IO.Path.GetFileName file
+      else
+        makeRelativePath project file
     if hasCompileWithInclude relpath proj then
       proj
     else
-      let fileEntry = xe ("Compile") (xa "Include" relpath)
+      let linkOpt = match link with
+                    | None -> []
+                    | Some l -> [xe "Link" l :> obj]
+      let fileRef = xa "Include" relpath :> obj :: linkOpt
+      let fileEntry = xe ("Compile") fileRef
       let insertionPoint =
         List.pick (fun f -> f proj)
           [ parentOfDescendant "Compile"

@@ -9,6 +9,7 @@ type private Args =
     | FrameworkVersion of string
     | Direction of int
     | Repeat of int
+    | Link of string
 with
     interface IArgParserTemplate with
         member s.Usage = 
@@ -17,6 +18,7 @@ with
             | Direction _ -> "direction"
             | Repeat _ -> "repeat"
             | FrameworkVersion _ -> "fxversion"
+            | Link _ -> "link"
 
 let private templateArg (res : ArgParseResults<Args>) =
     match res.TryGetResult(<@ Template @>) with
@@ -47,10 +49,10 @@ let parse (ToList args) : Operation =
     | ToLower "init" :: FullPath path :: Options opts -> 
         let template = templateArg opts
         Init (ProjectInitData.create (path, template))
-    | [ToLower "addfile"; FullPath project; FullPath file] -> 
-        NewFile { ProjPath = project; FilePath = file }
+    | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts -> 
+        AddFile ({ ProjPath = project; FilePath = file }, Types.Link (opts.TryGetResult <@ Link @>))
     | [ToLower "delfile"; FullPath project; FullPath file] -> 
-        NewFile { ProjPath = project; FilePath = file }
+        DelFile { ProjPath = project; FilePath = file }
     | [ToLower "reference"; FullPath project; FullPath reference] -> 
         Reference { ProjPath = project; Reference = reference }
     | _ -> failwith "not implemented yet"

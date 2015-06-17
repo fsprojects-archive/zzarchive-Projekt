@@ -14,7 +14,9 @@ projekt init /path/to/new/fsproj --template=library //creates a new project but 
 
 projekt reference /path/to/target {thingtoreference} //references project or binary
 
-projekt addfile /path/to/project /path/to/file //add file to project (create if not exists) - could template files?
+projekt addfile /path/to/project /path/to/file [--link] //add file to project (create if not exists) - could template files?
+
+projekt delfile /path/to/project /path/to/file //delete file from project
 
 projekt movefile /path/to/project --direction=up --n=3 //adjust file position
 
@@ -40,20 +42,18 @@ let main argv =
     | Init data ->
         Template.init "templates" data
         0
-    | AddFile data ->
+    | AddFile (data, Link link) ->
         if not (IO.File.Exists data.FilePath) then
             (IO.File.Create data.FilePath).Close()
-        let el = Project.addFile data.ProjPath data.FilePath
+        let el = Project.addFile data.ProjPath data.FilePath link
         save el data.ProjPath
     | DelFile data ->
-        if not (IO.File.Exists data.FilePath) then
-            (IO.File.Create data.FilePath).Close()
-        let el = Project.addFile data.ProjPath data.FilePath
+        let el = Project.delFile data.ProjPath data.FilePath
         save el data.ProjPath
     | Reference data ->
         match Project.addReference data.ProjPath data.Reference with
         | Success el ->
-            save el  data.ProjPath
+            save el data.ProjPath
         | Failure msg ->
             printfn "%s" msg
             1
