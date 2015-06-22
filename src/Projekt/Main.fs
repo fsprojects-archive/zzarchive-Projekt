@@ -1,4 +1,6 @@
 module Projekt.Main
+open System.Xml.Linq
+
 let help = """
 projekt (init|reference|newfile|addfile|renamefile) /path/to/project {--template=(library|console)} {--solution=path/to/sln} --direction=(down|up) --repeat={int} --frameworkversion=(4.0|4.5|4.5.1)
 
@@ -24,12 +26,14 @@ projekt movefile /path/to/project --direction=up --n=3 //adjust file position
 
 open System
 
+
+
 [<EntryPoint>]
 let main argv =
     printfn "pre %A" argv
     let op = Args.parse argv
 
-    let save (el : System.Xml.Linq.XElement) (path: string) =
+    let save (el : XElement) (path: string) =
         try
             el.Save path
             0
@@ -38,25 +42,26 @@ let main argv =
             printfn "err: failed to save %s. Message: %s" path ex.Message
             1
 
+    let saveOrPrintError path (result: Result<XElement>) : int =
+        match result with
+        | Success el -> save el path
+        | Failure msg -> printfn "%s" msg; 1
+    
     match op with
     | Init data ->
         Template.init "templates" data
         0
     | AddFile (data, Link link) ->
-        if not (IO.File.Exists data.FilePath) then
-            (IO.File.Create data.FilePath).Close()
-        let el = Project.addFile data.ProjPath data.FilePath link
-        save el data.ProjPath
+        saveOrPrintError data.ProjPath
+                         (Project.addFile data.ProjPath data.FilePath link)
+        
     | DelFile data ->
-        let el = Project.delFile data.ProjPath data.FilePath
-        save el data.ProjPath
+        saveOrPrintError data.ProjPath
+                         (Project.delFile data.ProjPath data.FilePath)
+
     | Reference data ->
-        match Project.addReference data.ProjPath data.Reference with
-        | Success el ->
-            save el data.ProjPath
-        | Failure msg ->
-            printfn "%s" msg
-            1
+        saveOrPrintError data.ProjPath
+                         (Project.addReference data.ProjPath data.Reference)
     | _ -> 
         printfn "not implemented yet"
         1

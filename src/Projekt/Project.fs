@@ -1,9 +1,9 @@
 module Projekt.Project
 
 open System
+open System.IO
 open System.Xml.Linq
 
-let xns s = XNamespace.Get s
 let msbuildns = "{http://schemas.microsoft.com/developer/msbuild/2003}"
 let xname s = XName.Get s
 
@@ -79,10 +79,12 @@ let parentOfDescendant name el =
     | Descendant name el -> Some el.Parent
     | _ -> None
 
-let hasCompileWithInclude incl =
-    function
-    | Descendant "Compile" (Attribute "Include" a) when a.Value = incl -> true
-    | _ -> false
+let hasCompileWithInclude file (xe: XElement) =
+    let hasInclude = function
+      | Attribute "Include" a when a.Value = file -> true
+      | _ -> false
+    xe.Descendants (xn (msbuildns + "Compile"))
+    |> Seq.exists hasInclude
 
 let hasProjectReferenceWithInclude incl =
     function
@@ -120,7 +122,7 @@ let private load (path : string) =
 
 let addReference project reference =
     result {
-        let relPath = Projekt.Util.makeRelativePath project reference
+        let relPath = makeRelativePath project reference
         let! proj = load project
         let! reference = load reference
         let! name = 
@@ -130,37 +132,59 @@ let addReference project reference =
         let! guid = projectGuid reference
         return! addProjRefNode relPath name guid proj }
 
-let addFile (project: string) (file: string) (link: Option<string>) =
-    let proj = XElement.Load project
-    let relpath =
-      if link.IsNone then
-        let target = IO.Path.GetDirectoryName project </> IO.Path.GetFileName file
-        if not (IO.File.Exists(target)) then
-          IO.File.Copy(file, target)
-        IO.Path.GetFileName file
-      else
-        makeRelativePath project file
-    if hasCompileWithInclude relpath proj then
-      proj
+let addFile (project: string) (file: string) (link: Option<string>) : Result<XElement> =
+    match load project with
+    | Failure x -> Failure x
+    | Success proj ->
+
+    let addFileToProject relpath =
+        if hasCompileWithInclude relpath proj then
+            Failure (sprintf "File '%s' already exists in project." relpath)
+        else
+            let linkOpt = match link with
+                          | None -> []
+                          | Some l -> [xe "Link" l :> obj]
+            let fileRef = xa "Include" relpath :> obj :: linkOpt
+            let fileEntry = xe ("Compile") fileRef
+            match List.tryPick (fun f -> f proj)
+                               [ parentOfDescendant "Compile"
+                                 parentOfDescendant "None" ] with
+            | Some ig -> ig.Add fileEntry
+            | None -> proj.Add (xe "ItemGroup" fileEntry)
+            Success proj
+
+    if link.IsNone then
+        if Path.GetDirectoryName project = Path.GetDirectoryName file then
+            if not (File.Exists file) then
+                (File.Create file).Close()
+            addFileToProject (Path.GetFileName file)
+        else
+            // We would copy 'file' to adjacent to the project
+            let target = Path.GetDirectoryName project </> Path.GetFileName file
+            if not (File.Exists file) then
+                Failure (sprintf "File '%s' not found." file)
+            else // File.Exists file
+                if File.Exists target then
+                    Failure (sprintf "Target file '%s' already present." target)
+                else
+                    File.Copy(file, target)
+                    addFileToProject (Path.GetFileName file)
     else
-      let linkOpt = match link with
-                    | None -> []
-                    | Some l -> [xe "Link" l :> obj]
-      let fileRef = xa "Include" relpath :> obj :: linkOpt
-      let fileEntry = xe ("Compile") fileRef
-      let insertionPoint =
-        List.pick (fun f -> f proj)
-          [ parentOfDescendant "Compile"
-            parentOfDescendant "None"
-            Some ]
-      insertionPoint.Add (xe "ItemGroup" fileEntry)
-      proj
+        addFileToProject (makeRelativePath project file)
+
+let internal removeFileIfPresent (proj: XElement) relpath =
+    let hasInclude = function
+        | Attribute "Include" a when a.Value = relpath -> true
+        | _ -> false
+    let eopt =
+        proj.Descendants (xn (msbuildns + "Compile"))
+        |> Seq.tryFind hasInclude
+    match eopt with
+    | Some e -> e.Remove(); Success proj
+    | None -> Failure (sprintf "File '%s' not found in project." relpath)
 
 let delFile (project: string) (file: string) =
     let proj = XElement.Load project
     let relpath = makeRelativePath project file
-    match proj with
-    | (Descendant "Compile" (Attribute "Include" a) as e)
-        when a.Value = relpath -> e.Remove()
-    | _ -> ()
-    proj
+    removeFileIfPresent proj relpath
+

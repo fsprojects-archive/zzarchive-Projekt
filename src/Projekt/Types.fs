@@ -67,15 +67,4 @@ type ResultBuilder() =
 
 let result = ResultBuilder()
 
-let atest =
-    async {
-        let! _ = async { return 1 }
-        let! s = async { return "" }
-        return s }
-
-let test =
-    result {
-        let! _ = Success 1
-        let!  s = Success "" 
-        return s }
 
