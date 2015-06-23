@@ -24,8 +24,12 @@ open System
 
 [<EntryPoint>]
 let main argv =
-    printfn "pre %A" argv
-    let op = Args.parse argv
+    let op = 
+        match Args.parse argv with
+        | Success op -> op
+        | Failure msg ->
+            eprintfn "%s" msg
+            Help
 
     let save (el : System.Xml.Linq.XElement) (path: string) =
         try
@@ -33,13 +37,16 @@ let main argv =
             0
         with
         | ex ->
-            printfn "err: failed to save %s. Message: %s" path ex.Message
+            eprintfn "err: failed to save %s. Message: %s" path ex.Message
             1
 
     match op with
     | Init data ->
-        Template.init "templates" data
-        0
+        match Template.init "templates" data with
+        | Success _ -> 0
+        | Failure msg ->
+            eprintfn "%s" msg
+            1
     | AddFile data ->
         if not (IO.File.Exists data.FilePath) then
             (IO.File.Create data.FilePath).Close()
@@ -53,11 +60,11 @@ let main argv =
     | Reference data ->
         match Project.addReference data.ProjPath data.Reference with
         | Success el ->
-            save el  data.ProjPath
+            save el data.ProjPath
         | Failure msg ->
-            printfn "%s" msg
+            eprintfn "%s" msg
             1
     | _ -> 
-        printfn "not implemented yet"
+        printfn "%s" help
         1
 

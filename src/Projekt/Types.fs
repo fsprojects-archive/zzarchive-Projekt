@@ -49,7 +49,7 @@ type Operation =
     | AddFile of FileData
     | DelFile of FileData
     | MoveFile of FileData * Direction * Repeat
-    | Error
+    | Help
 
 type Result<'a> =
     | Success of 'a
@@ -63,7 +63,34 @@ type ResultBuilder() =
         match m with
         | Success m -> f m
         | Failure s -> Failure s
-
+    member __.Delay f = f
+    member __.Run f = f ()
+    member __.Zero () = Success ()
+    member __.TryWith (body, handler) =
+        try
+            body()
+        with
+        | e -> handler e
+    member __.TryFinally (body, compensation) =
+        try
+            body()
+        finally
+            compensation()
+    member x.Using(d:#System.IDisposable, body) =
+        let result = fun () -> body d
+        x.TryFinally (result, fun () ->
+            match d with
+            | null -> ()
+            | d -> d.Dispose())
+    member x.While (guard, body) =
+        if not <| guard () then
+            x.Zero()
+        else
+            x.Bind (body(), (fun () -> x.While(guard, body)))
+    member x.For(s:seq<_>, body) =
+        x.Using(s.GetEnumerator(), fun enum ->
+            x.While(enum.MoveNext,
+                x.Delay(fun () -> body enum.Current)))
 let result = ResultBuilder()
 
 let atest =

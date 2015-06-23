@@ -47,8 +47,8 @@ let internal projectGuid =
 let internal projectName = 
     function
     | Descendant "Name" (Value name) -> 
-        Some name 
-    | _ -> None
+        Success name 
+    | _ -> Failure "err: failed to read project name."
 
 let internal assemblyName = 
     function
@@ -120,13 +120,13 @@ let private load (path : string) =
 
 let addReference project reference =
     result {
-        let relPath = Projekt.Util.makeRelativePath project reference
+        let relPath = Util.makeRelativePath project reference
         let! proj = load project
         let! reference = load reference
         let! name = 
             match projectName reference with
-            | Some name -> Success name
-            | None -> assemblyName reference
+            | Success name -> Success name
+            | _ -> assemblyName reference
         let! guid = projectGuid reference
         return! addProjRefNode relPath name guid proj }
 

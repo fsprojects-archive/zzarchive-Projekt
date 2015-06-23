@@ -43,7 +43,7 @@ let ``addProjRefNode should append an ItemGroup if none found`` () =
     let expected = XElement.Parse singleIGandTestRef 
     let guid = Guid.Parse "{165a6853-05ed-4f03-a7b1-1c84d4f01bf5}"
     let sut = XElement.Parse baseXml
-    let result = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
+    let (Success result) = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
     XNode.DeepEquals(expected, result)
     |> Assert.IsTrue
 
@@ -73,7 +73,7 @@ let ``addProjRefNode should append a ProjectReference if one already exists`` ()
     let expected = XElement.Parse expected
     let guid = Guid.Parse "{ceb3e6b3-c06f-4a24-82e6-9e70ba4adfe8}"
     let sut = XElement.Parse singleIGandTestRef
-    let result = Project.addProjRefNode "../../src/Test2/Test2.fsproj" "Test2" guid sut
+    let (Success result) = Project.addProjRefNode "../../src/Test2/Test2.fsproj" "Test2" guid sut
     XNode.DeepEquals(expected, result)
     |> Assert.IsTrue
 
@@ -82,7 +82,7 @@ let ``addProjRefNode should be idempotent`` () =
     let expected = XElement.Parse singleIGandTestRef 
     let sut = XElement.Parse singleIGandTestRef 
     let guid = Guid.Parse "{165a6853-05ed-4f03-a7b1-1c84d4f01bf5}"
-    let result = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
+    let (Success result) = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
     XNode.DeepEquals(expected, result)
     |> Assert.IsTrue
 

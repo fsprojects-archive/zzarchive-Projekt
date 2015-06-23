@@ -41,16 +41,16 @@ let (|FullPath|_|) (path : string) =
 let split (args : string list) =
     List.partition (fun (s : string) -> not <| s.StartsWith "--" ) args
 
-let parse (ToList args) : Operation =
+let parse (ToList args) : Result<Operation> =
     let required, _ = split args
     match required with
     | ToLower "init" :: FullPath path :: Options opts -> 
         let template = templateArg opts
-        Init (ProjectInitData.create (path, template))
+        Init (ProjectInitData.create (path, template)) |> Success
     | [ToLower "addfile"; FullPath project; FullPath file] -> 
-        NewFile { ProjPath = project; FilePath = file }
+        NewFile { ProjPath = project; FilePath = file } |> Success
     | [ToLower "delfile"; FullPath project; FullPath file] -> 
-        NewFile { ProjPath = project; FilePath = file }
+        NewFile { ProjPath = project; FilePath = file } |> Success
     | [ToLower "reference"; FullPath project; FullPath reference] -> 
-        Reference { ProjPath = project; Reference = reference }
-    | _ -> failwith "not implemented yet"
+        Reference { ProjPath = project; Reference = reference } |> Success
+    | _ -> Failure (sprintf "err: could not parse %A as an implemented command" args)
