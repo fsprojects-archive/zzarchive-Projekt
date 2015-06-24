@@ -1,9 +1,9 @@
-# projekt
-Utility for editing fsharp project files
+# Projekt
+A utility for editing fsharp project files.
 
-# Status
+## Status
 Work in progress.
 
-# Maintainers
+## Maintainers
 * @kjnilsson
 * @rneatherway
