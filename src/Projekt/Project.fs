@@ -82,17 +82,27 @@ let internal compileItemGroup =
         Some el.Parent
     | _ -> None  
 
+let internal hasAttr attr value =
+    function
+    | Attribute attr a when a.Value = value -> true
+    | _ -> false
+
+let internal hasInclude value = hasAttr "Include" value
+
 let parentOfDescendant name el =
     match el with
     | Descendant name el -> Some el.Parent
     | _ -> None
 
 let hasCompileWithInclude file (xe: XElement) =
-    let hasInclude = function
-      | Attribute "Include" a when a.Value = file -> true
-      | _ -> false
-    xe.Descendants (xn (msbuildns + "Compile"))
-    |> Seq.exists hasInclude
+    match xe with
+    | Descendants "Compile" descs -> Seq.exists (hasInclude file) descs
+    | _ -> false
+
+let tryFindElementWithAttrVal (element: string) (attr: string) (value: string) =
+    function
+    | Descendants element descs -> Seq.tryFind (hasAttr attr value) descs
+    | _ -> None
 
 let hasProjectReferenceWithInclude incl =
     function
@@ -143,7 +153,7 @@ let addReference project reference =
         let! guid = projectGuid reference
         return! addProjRefNode relPath name guid proj }
 
-let addFile (project: string) (file: string) (link: Option<string>) : Result<XElement> =
+let addFile (project: string) (file: string) (link: Option<string>) (compile: bool) : Result<XElement> =
     match load project with
     | Failure x -> Failure x
     | Success proj ->
@@ -156,7 +166,8 @@ let addFile (project: string) (file: string) (link: Option<string>) : Result<XEl
                           | None -> []
                           | Some l -> [xe "Link" l :> obj]
             let fileRef = xa "Include" relpath :> obj :: linkOpt
-            let fileEntry = xe ("Compile") fileRef
+            let fileAttr = if compile then "Compile" else "None"
+            let fileEntry = xe fileAttr fileRef
             match List.tryPick (fun f -> f proj)
                                [ parentOfDescendant "Compile"
                                  parentOfDescendant "None" ] with
@@ -184,13 +195,8 @@ let addFile (project: string) (file: string) (link: Option<string>) : Result<XEl
         addFileToProject (makeRelativePath project file)
 
 let internal removeFileIfPresent (proj: XElement) relpath =
-    let hasInclude = function
-        | Attribute "Include" a when a.Value = relpath -> true
-        | _ -> false
-    let eopt =
-        proj.Descendants (xn (msbuildns + "Compile"))
-        |> Seq.tryFind hasInclude
-    match eopt with
+    let fileOfType name = tryFindElementWithAttrVal name "Include" relpath proj
+    match List.tryPick fileOfType ["Compile";"None"] with
     | Some e -> e.Remove(); Success proj
     | None -> Failure (sprintf "File '%s' not found in project." relpath)
 
@@ -199,3 +205,28 @@ let delFile (project: string) (file: string) =
     let relpath = makeRelativePath project file
     removeFileIfPresent proj relpath
 
+let moveFile (project: string) (file: string) (direction: Direction) (repeat: int) =
+    let proj = XElement.Load project
+    let relpath = makeRelativePath project file
+
+    let fileOfType name = tryFindElementWithAttrVal name "Include" relpath proj
+    match List.tryPick fileOfType ["Compile";"None"] with
+    | None -> Failure (sprintf "File '%s' not found in project." relpath)
+    | Some e ->
+
+    match direction with
+    | Up -> let ns = e.NodesBeforeSelf()
+            let ns = Seq.skip (max 0 (Seq.length ns - repeat)) ns
+            if not (Seq.isEmpty ns) then
+                let insertionPoint = Seq.head ns
+                insertionPoint.AddBeforeSelf e
+                e.Remove()
+
+    | Down -> let ns = e.NodesAfterSelf()
+              let ns = Seq.take (max 0 (Seq.length ns - repeat)) ns
+              if not (Seq.isEmpty ns) then
+                  let insertionPoint = Seq.head ns
+                  insertionPoint.AddAfterSelf e
+                  e.Remove()
+
+    Success proj

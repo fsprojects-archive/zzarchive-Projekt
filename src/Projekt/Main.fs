@@ -58,12 +58,17 @@ let main argv =
         | Failure msg ->
             eprintfn "%s" msg
             1
-    | AddFile (data, Link link) ->
-        Project.addFile data.ProjPath data.FilePath link
+    | AddFile data ->
+        Project.addFile data.ProjPath data.FilePath data.Link data.Compile
         |> saveOrPrintError data.ProjPath
     | DelFile data ->
-        saveOrPrintError data.ProjPath
-                         (Project.delFile data.ProjPath data.FilePath)
+        (Project.delFile data.ProjPath data.FilePath)
+        |> saveOrPrintError data.ProjPath
+
+    | MoveFile data ->
+        (Project.moveFile data.ProjPath data.FilePath data.Direction data.Repeat)
+        |> saveOrPrintError data.ProjPath
+        
     | Reference { ProjPath = path; Reference = reference } ->
         Project.addReference path reference
         |> saveOrPrintError path 
