@@ -5,5 +5,5 @@ A utility for editing fsharp project files.
 Work in progress.
 
 ## Maintainers
-* @kjnilsson
-* @rneatherway
+* [@kjnilsson](https://github.com/kjnilsson)
+* [@rneatherway](https://github.com/rneatherway)
