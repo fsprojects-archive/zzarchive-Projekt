@@ -22,8 +22,16 @@ let (|Guid|_|) s =
     | true, g -> Some g
     | _ -> None
 
+let (|Descendants|_|) name (xe : XElement) =
+    match xe.Descendants (xn (msbuildns + name)) with
+    | null -> None
+    | desc when not (Seq.isEmpty desc) -> 
+        Some (desc |> Seq.toList)
+    | _ -> None
+
 let (|Descendant|_|) name (xe : XElement) =
     match xe.Descendants (xn (msbuildns + name)) with
+    | null -> None
     | Head h -> Some h
     | _ -> None
 
@@ -88,8 +96,11 @@ let hasCompileWithInclude file (xe: XElement) =
 
 let hasProjectReferenceWithInclude incl =
     function
-    | Descendant "ProjectReference" (Attribute "Include" a) when a.Value = incl -> 
-        true
+    | Descendants "ProjectReference" descs -> 
+        Seq.exists (
+            function
+            | Attribute "Include" a -> a.Value = incl
+            | _ -> false) descs
     | _ -> false
 
 let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XElement) =
