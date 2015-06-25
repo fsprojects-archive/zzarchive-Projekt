@@ -9,10 +9,6 @@ type Direction =
     | Up
     | Down
 
-type Repeat = | Repeat of int
-
-type Link = | Link of Option<string>
-
 type FrameworkVersion =
     | V4_0
     | V4_5
@@ -40,17 +36,29 @@ type ProjectReferenceData =
     { ProjPath: string
       Reference: string }
 
-type FileData =
+type AddFileData =
+    { ProjPath: string
+      FilePath: string
+      Link: Option<string>
+      Compile: bool }
+    
+type DelFileData =
     { ProjPath: string
       FilePath: string }
+
+type MoveFileData =
+    { ProjPath: string
+      FilePath: string
+      Direction: Direction
+      Repeat: int }
 
 type Operation =
     | Init of ProjectInitData //project path 
     | Reference of ProjectReferenceData
-    | AddFile of FileData * Link
-    | DelFile of FileData
-    | MoveFile of FileData * Direction * Repeat
-    | Help
+    | AddFile of AddFileData
+    | DelFile of DelFileData
+    | MoveFile of MoveFileData
+    | Exit
 
 type Result<'a> =
     | Success of 'a
