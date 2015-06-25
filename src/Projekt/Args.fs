@@ -10,7 +10,7 @@ type private Args =
     | Direction of string
     | Repeat of int
     | Link of string
-    | Compile of string
+    | Compile of bool
 with
     interface IArgParserTemplate with
         member s.Usage = 
@@ -20,7 +20,7 @@ with
             | Repeat _ -> "movefile -- specify the distance [default: 1]"
             | FrameworkVersion _ -> "init-- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]"
             | Link _ -> "addfile -- specify an optional Link attribute"
-            | Compile _ -> "addfile -- should the file be compiled or not (false|true) [default: true]"
+            | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
 
 let private templateArg (res : ArgParseResults<Args>) =
     match res.TryGetResult(<@ Template @>) with
@@ -34,12 +34,6 @@ let private parseDirection s =
     | ToLower "up" -> Up
     | ToLower "down" -> Down
     | _ -> failwith "invalid direction specified"
-
-let private parseCompile s =
-    match s with
-    | ToLower "true" -> true
-    | ToLower "false" -> false
-    | _ -> failwith "invalid compilation option"
 
 let private parser = UnionArgParser.Create<Args>()
 
@@ -63,8 +57,7 @@ let parse (ToList args) : Result<Operation> =
             Init (ProjectInitData.create (path, template)) |> Success
             
         | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts ->
-            let compile = not (opts.Contains <@ Compile @>) ||
-                          opts.PostProcessResult(<@ Compile @>, parseCompile)
+            let compile = opts.GetResult(<@ Compile @>, true)
             AddFile { ProjPath = project
                       FilePath = file
                       Link = opts.TryGetResult <@ Link @>
