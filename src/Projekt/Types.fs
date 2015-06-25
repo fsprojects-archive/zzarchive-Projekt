@@ -58,7 +58,7 @@ type Operation =
     | AddFile of AddFileData
     | DelFile of DelFileData
     | MoveFile of MoveFileData
-    | Help
+    | Exit
 
 type Result<'a> =
     | Success of 'a
