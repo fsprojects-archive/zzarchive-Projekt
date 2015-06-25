@@ -205,10 +205,7 @@ let delFile (project: string) (file: string) =
     let relpath = makeRelativePath project file
     removeFileIfPresent proj relpath
 
-let moveFile (project: string) (file: string) (direction: Direction) (repeat: int) =
-    let proj = XElement.Load project
-    let relpath = makeRelativePath project file
-
+let internal moveFileNodePosition proj relpath direction repeat =
     let fileOfType name = tryFindElementWithAttrVal name "Include" relpath proj
     match List.tryPick fileOfType ["Compile";"None"] with
     | None -> Failure (sprintf "File '%s' not found in project." relpath)
@@ -223,10 +220,18 @@ let moveFile (project: string) (file: string) (direction: Direction) (repeat: in
                 e.Remove()
 
     | Down -> let ns = e.NodesAfterSelf()
-              let ns = Seq.take (max 0 (Seq.length ns - repeat)) ns
+              let ns = Seq.take (min (Seq.length ns) repeat) ns
               if not (Seq.isEmpty ns) then
-                  let insertionPoint = Seq.head ns
+                  let insertionPoint = Seq.last ns
                   insertionPoint.AddAfterSelf e
                   e.Remove()
 
     Success proj
+
+let moveFile (project: string) (file: string) (direction: Direction) (repeat: int) =
+    match load project with
+    | Failure s -> Failure s
+    | Success proj ->
+      
+    let relpath = makeRelativePath project file
+    moveFileNodePosition proj relpath direction repeat
