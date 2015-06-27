@@ -6,7 +6,7 @@ open Nessos.UnionArgParser
 
 type private Args =
     | Template of string
-    | FrameworkVersion of string
+    | [<AltCommandLine("-fxv")>] FrameworkVersion of string
     | Direction of string
     | Repeat of int
     | Link of string
@@ -18,7 +18,7 @@ with
             | Template _ -> "init -- specify the template (library|console) [default: library]"
             | Direction _ -> "movefile -- specify the direction (down|up)"
             | Repeat _ -> "movefile -- specify the distance [default: 1]"
-            | FrameworkVersion _ -> "init-- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]"
+            | FrameworkVersion _ -> "init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]"
             | Link _ -> "addfile -- specify an optional Link attribute"
             | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
 
@@ -28,6 +28,14 @@ let private templateArg (res : ArgParseResults<Args>) =
     | Some (ToLower "library") -> Library
     | None -> Library
     | _ -> failwith "invalid template argument specified"
+
+let private frameworkVersionArg (res : ArgParseResults<Args>) =
+    match res.TryGetResult(<@ FrameworkVersion @>) with
+    | Some "4.0" -> V4_0
+    | Some "4.5" -> V4_5 
+    | Some "4.5.1" -> V4_5_1
+    | None -> V4_5
+    | _ -> failwith "invalid framework version argument specified"
 
 let private parseDirection s =
     match s with
@@ -52,9 +60,13 @@ let commandUsage = "projekt (init|reference|newfile|addfile) /path/to/project [/
 let parse (ToList args) : Result<Operation> =
     try
         match args with
+        | [] -> 
+            parser.Usage "no arguments specificed"
+            |> Failure
         | ToLower "init" :: FullPath path :: Options opts -> 
             let template = templateArg opts
-            Init (ProjectInitData.create (path, template)) |> Success
+            let fxv = frameworkVersionArg opts
+            Init (ProjectInitData.create (path, template, fxv)) |> Success
             
         | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts ->
             let compile = opts.GetResult(<@ Compile @>, true)
@@ -80,9 +92,10 @@ let parse (ToList args) : Result<Operation> =
             
         | [ToLower "reference"; FullPath project; FullPath reference] -> 
             Reference { ProjPath = project; Reference = reference } |> Success
+
         | _ -> Failure (parser.Usage (sprintf "Error: '%s' is not a recognized command or received incorrect arguments.\n\n%s" args.Head commandUsage))
     with
-      | :? System.ArgumentException as e ->
+    | :? System.ArgumentException as e ->
             let lines = e.Message.Split([|'\n'|])
             let msg = parser.Usage (sprintf "%s\n\n%s" lines.[0] commandUsage)
             Failure msg

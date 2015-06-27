@@ -6,7 +6,8 @@ open System
 let main argv =
     let op = 
         match Args.parse argv with
-        | Success op -> printfn "%A" op; exit 1
+        | Success op -> 
+            printfn "%A" op; op 
         | Failure msg ->
             eprintfn "%s" msg
             Exit
@@ -35,6 +36,7 @@ let main argv =
     | AddFile data ->
         Project.addFile data.ProjPath data.FilePath data.Link data.Compile
         |> saveOrPrintError data.ProjPath
+
     | DelFile data ->
         (Project.delFile data.ProjPath data.FilePath)
         |> saveOrPrintError data.ProjPath
