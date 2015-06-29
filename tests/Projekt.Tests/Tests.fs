@@ -1,4 +1,5 @@
 module Projekt.Tests
+#nowarn "25"
 
 open System
 open System.Xml.Linq
@@ -38,6 +39,7 @@ let singleIGandTestRef = """<?xml version="1.0" encoding="utf-8"?>
   </ItemGroup>
 </Project>
 """ 
+
 [<Test>]
 let ``hasProjectReferenceWithInclude should find`` () =
     let sut = XElement.Parse singleIGandTestRef
@@ -73,8 +75,8 @@ let ``addProjRefNode should append a ProjectReference if one already exists`` ()
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-</Project>
-""" 
+</Project>""" 
+
     let expected = XElement.Parse expected
     let guid = Guid.Parse "{ceb3e6b3-c06f-4a24-82e6-9e70ba4adfe8}"
     let sut = XElement.Parse singleIGandTestRef
