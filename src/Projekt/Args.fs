@@ -7,6 +7,7 @@ open Nessos.UnionArgParser
 type private Args =
     | Template of string
     | [<AltCommandLine("-fxv")>] FrameworkVersion of string
+    | Organisation of string
     | Direction of string
     | Repeat of int
     | Link of string
@@ -19,6 +20,7 @@ with
             | Direction _ -> "movefile -- specify the direction (down|up)"
             | Repeat _ -> "movefile -- specify the distance [default: 1]"
             | FrameworkVersion _ -> "init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]"
+            | Organisation _ -> "init -- specify the organisation"
             | Link _ -> "addfile -- specify an optional Link attribute"
             | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
 
@@ -66,7 +68,11 @@ let parse (ToList args) : Result<Operation> =
         | ToLower "init" :: FullPath path :: Options opts -> 
             let template = templateArg opts
             let fxv = frameworkVersionArg opts
-            Init (ProjectInitData.create (path, template, fxv)) |> Success
+            let org = 
+                match opts.TryGetResult(<@ Organisation @>) with
+                | Some org -> org
+                | None -> "MyOrg"
+            Init (ProjectInitData.create (path, template, fxv, org)) |> Success
             
         | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts ->
             let compile = opts.GetResult(<@ Compile @>, true)

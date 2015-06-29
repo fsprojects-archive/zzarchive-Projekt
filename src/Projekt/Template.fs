@@ -40,7 +40,6 @@ let update (data: ProjectInitData) =
     let name = Path.GetFileNameWithoutExtension data.ProjPath
     let targetDir = Path.GetDirectoryName data.ProjPath
     let guid1 = Guid.NewGuid() |> string
-    let org = "FSharp" //TODO: this should be an optional argument
     Directory.GetFiles targetDir 
     |> Seq.map (fun f -> f, File.ReadAllText f)
     |> Seq.map (fun (f, text) ->
@@ -49,9 +48,8 @@ let update (data: ProjectInitData) =
             |> replace "$targetframeworkversion$" (string data.FrameworkVersion) //TODO override ToString
             |> replace "$guid1$" guid1 
             |> replace "$projectname$" name 
-            |> replace "$registeredorganization$" org 
-            |> replace "$year$" (DateTime.Now.Year.ToString()) 
-            |> replace "$registeredorganization$" org )
+            |> replace "$registeredorganization$" data.Organisation 
+            |> replace "$year$" (DateTime.Now.Year.ToString()) )
     |> Seq.iter (fun (f, text) ->
         File.WriteAllText(f, text))
 
