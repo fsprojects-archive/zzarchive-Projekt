@@ -6,8 +6,7 @@ open System
 let main argv =
     let op = 
         match Args.parse argv with
-        | Success op -> 
-            printfn "%A" op; op 
+        | Success op -> op 
         | Failure msg ->
             eprintfn "%s" msg
             Exit
