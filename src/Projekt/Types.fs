@@ -24,15 +24,13 @@ type ProjectInitData =
     { ProjPath: string
       Template: Template
       FrameworkVersion: FrameworkVersion
-      Organisation: string
-      Solution: string option }
+      Organisation: string}
 with 
-    static member create (path, ?template, ?fxversion, ?org, ?solution) =
+    static member create (path, ?template, ?fxversion, ?org) =
         { ProjPath = path
           Template = defaultArg template Library
           FrameworkVersion = defaultArg fxversion V4_5
-          Organisation = defaultArg org "MyOrg"
-          Solution = solution }
+          Organisation = defaultArg org "MyOrg" }
 
 type ProjectReferenceData =
     { ProjPath: string
