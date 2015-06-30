@@ -59,6 +59,7 @@ type Operation =
     | DelFile of DelFileData
     | MoveFile of MoveFileData
     | Exit
+    | Version
 
 type Result<'a> =
     | Success of 'a

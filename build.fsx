@@ -82,7 +82,8 @@ Target "AssemblyInfo" (fun _ ->
           Attribute.Product project
           Attribute.Description summary
           Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion ]
+          Attribute.FileVersion release.AssemblyVersion
+          Attribute.InternalsVisibleTo "Projekt.Tests" ]
 
     let getProjectDetails projectPath =
         let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
@@ -338,7 +339,7 @@ Target "BuildPackage" DoNothing
 Target "All" DoNothing
 
 "Clean"
-//  ==> "AssemblyInfo"
+  ==> "AssemblyInfo"
   ==> "Build"
   ==> "CopyBinaries"
   ==> "RunTests"

@@ -57,7 +57,7 @@ let (|FullPath|_|) (path : string) =
     with
     | _ -> None
 
-let commandUsage = "projekt (init|reference|newfile|addfile|delfile) /path/to/project [/path/to/(file|project)]"
+let commandUsage = "projekt (init|reference|newfile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]"
 
 let parse (ToList args) : Result<Operation> =
     try
@@ -65,6 +65,9 @@ let parse (ToList args) : Result<Operation> =
         | [] -> 
             parser.Usage commandUsage 
             |> Failure
+
+        | ToLower "version" :: _ ->
+            Success Version
 
         | ToLower "init" :: FullPath path :: Options opts -> 
             let template = templateArg opts
