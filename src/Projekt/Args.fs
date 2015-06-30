@@ -57,14 +57,15 @@ let (|FullPath|_|) (path : string) =
     with
     | _ -> None
 
-let commandUsage = "projekt (init|reference|newfile|addfile) /path/to/project [/path/to/file]"
+let commandUsage = "projekt (init|reference|newfile|addfile|delfile) /path/to/project [/path/to/(file|project)]"
 
 let parse (ToList args) : Result<Operation> =
     try
         match args with
         | [] -> 
-            parser.Usage "no arguments specificed"
+            parser.Usage commandUsage 
             |> Failure
+
         | ToLower "init" :: FullPath path :: Options opts -> 
             let template = templateArg opts
             let fxv = frameworkVersionArg opts
