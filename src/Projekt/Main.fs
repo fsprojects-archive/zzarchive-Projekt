@@ -46,7 +46,12 @@ let main argv =
         
     | Reference { ProjPath = path; Reference = reference } ->
         Project.addReference path reference
-        |> saveOrPrintError path 
+        |> saveOrPrintError path
+
+    | Version ->
+        printfn "projekt %s" AssemblyVersionInformation.Version
+        0
+          
     | _ -> 
         1
 
