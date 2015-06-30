@@ -226,6 +226,99 @@ let ``delFile should remove file if present`` () =
     | Success result ->
         let expected = XElement.Parse delExpected
         assertDeepEquals expected result
+        
+[<Test>]
+let ``delFile should fail if not present`` () =
+    let proj = XElement.Parse delInput
+    match Project.removeFileIfPresent proj "SillyName.fs" with
+    | Failure s -> s |> should endWith "not found in project."
+    | Success result -> Assert.Fail (result.ToString())
+
+let delNoneInput = """<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
+    <AssemblyName>Test</AssemblyName>
+    <Name>Test</Name>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Test1.fs" />
+    <None Include="Test2.fs" />
+  </ItemGroup>
+</Project>
+"""
+
+let delNoneExpected = """<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
+    <AssemblyName>Test</AssemblyName>
+    <Name>Test</Name>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Test1.fs" />
+  </ItemGroup>
+</Project>
+"""
+
+
+[<Test>]
+let ``delFile should remove 'None' file if present`` () =
+    let proj = XElement.Parse delNoneInput
+    match Project.removeFileIfPresent proj "Test2.fs" with
+    | Failure s -> Assert.Fail s
+    | Success result ->
+        let expected = XElement.Parse delNoneExpected
+        assertDeepEquals expected result
+
+let delMultipleIGInput = """<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
+    <AssemblyName>Test</AssemblyName>
+    <Name>Test</Name>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Test1.fs" />
+    <None Include="Test2.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Test3.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Test4.fs" />
+  </ItemGroup>
+</Project>
+"""
+
+let delMultipleIGExpected = """<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
+    <AssemblyName>Test</AssemblyName>
+    <Name>Test</Name>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Test1.fs" />
+    <None Include="Test2.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Test3.fs" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>
+"""
+
+
+[<Test>]
+let ``delFile should remove file in later ItemGroups`` () =
+    let proj = XElement.Parse delMultipleIGInput
+    match Project.removeFileIfPresent proj "Test4.fs" with
+    | Failure s -> Assert.Fail s
+    | Success result ->
+        let expected = XElement.Parse delMultipleIGExpected
+        assertDeepEquals expected result
 
 [<Test>]
 let ``moveFile up with 0 is identity`` () =
