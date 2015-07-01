@@ -29,7 +29,7 @@ let main argv =
     let templatesDir = 
         //slight hack to allow the templates directory to be located 
         //in the same directory as the exe for distribution 
-        let cur = Reflection.Assembly.GetExecutingAssembly().Location </> "templates"
+        let cur = Reflection.Assembly.GetExecutingAssembly().CodeBase </> "templates"
         if Directory.Exists cur then cur
         else "templates" 
     
