@@ -1,6 +1,7 @@
 module Projekt.Main
-open System.Xml.Linq
 open System
+open System.IO
+open System.Xml.Linq
 
 [<EntryPoint>]
 let main argv =
@@ -24,10 +25,17 @@ let main argv =
         match result with
         | Success el -> save el path
         | Failure msg -> eprintfn "%s" msg; 1
+
+    let templatesDir = 
+        //slight hack to allow the templates directory to be located 
+        //in the same directory as the exe for distribution 
+        let cur = Reflection.Assembly.GetExecutingAssembly().CodeBase </> "templates"
+        if Directory.Exists cur then cur
+        else "templates" 
     
     match op with
     | Init data ->
-        match Template.init "templates" data with
+        match Template.init templatesDir data with
         | Success _ -> 0
         | Failure msg ->
             eprintfn "%s" msg
