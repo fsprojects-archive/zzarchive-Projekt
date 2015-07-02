@@ -2,6 +2,7 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
+#I @"packages/FAKE/tools/"
 #r @"packages/FAKE/tools/FakeLib.dll"
 open Fake
 open Fake.Git
@@ -51,18 +52,24 @@ let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
-let gitOwner = "kjnilsson" 
+let gitOwner = "fsprojects" 
 let gitHome = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
 let gitName = "projekt"
 
 // The url for the raw files hosted
-let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/kjnilsson"
+let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/fsprojects"
+
+// File name of the release archive
+let releaseArchive = project + ".zip"
 
 // --------------------------------------------------------------------------------------
 // END TODO: The rest of the file includes standard build steps
 // --------------------------------------------------------------------------------------
+
+// Project files under src (but not any templates that end up there)
+let srcProjects = !! "src/**/*.??proj" -- "src/**/templates/**"
 
 // Read additional information from the release notes document
 let release = LoadReleaseNotes "RELEASE_NOTES.md"
@@ -93,7 +100,7 @@ Target "AssemblyInfo" (fun _ ->
           (getAssemblyInfoAttributes projectName)
         )
 
-    !! "src/**/*.??proj"
+    srcProjects
     |> Seq.map getProjectDetails
     |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
         match projFileName with
@@ -107,7 +114,7 @@ Target "AssemblyInfo" (fun _ ->
 // But keeps a subdirectory structure for each project in the 
 // src folder to support multiple project outputs
 Target "CopyBinaries" (fun _ ->
-    !! "src/**/*.??proj"
+    srcProjects
     |>  Seq.map (fun f -> ((System.IO.Path.GetDirectoryName f) @@ "bin/Release", "bin" @@ (System.IO.Path.GetFileNameWithoutExtension f)))
     |>  Seq.iter (fun (fromDir, toDir) -> CopyDir toDir fromDir (fun _ -> true))
 )
@@ -160,7 +167,7 @@ Target "SourceLink" (fun _ ->
         | Csproj -> (projFileName, "**/AssemblyInfo.cs")
         | Vbproj -> (projFileName, "**/AssemblyInfo.vb")
         
-    !! "src/**/*.??proj"
+    srcProjects
     |> Seq.map addAssemblyInfo
     |> Seq.iter (fun (projFile, assemblyInfo) ->
         let proj = VsProj.LoadRelease projFile 
@@ -192,6 +199,13 @@ Target "PublishNuget" (fun _ ->
             WorkingDir = "bin" })
 )
 
+// --------------------------------------------------------------------------------------
+// Build a zipped release
+
+Target "ReleaseArchive" (fun _ ->
+  !! "bin/Projekt/**"
+  |> Zip "bin/Projekt" releaseArchive
+)
 
 // --------------------------------------------------------------------------------------
 // Generate the documentation
@@ -326,7 +340,7 @@ Target "Release" (fun _ ->
     // release on github
     createClient (getBuildParamOrDefault "github-user" "") (getBuildParamOrDefault "github-pw" "")
     |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes 
-    // TODO: |> uploadFile "PATH_TO_FILE"    
+    |> uploadFile releaseArchive
     |> releaseDraft
     |> Async.RunSynchronously
 )
@@ -367,11 +381,15 @@ Target "All" DoNothing
 "GenerateHelp"
   ==> "KeepRunning"
     
-"ReleaseDocs"
-  ==> "Release"
+// "ReleaseDocs"
+//   ==> "Release"
 
-"BuildPackage"
-  ==> "PublishNuget"
+// "BuildPackage"
+//   ==> "PublishNuget"
+//   ==> "Release"
+
+"CopyBinaries"
+  ==> "ReleaseArchive"
   ==> "Release"
 
 RunTargetOrDefault "All"
