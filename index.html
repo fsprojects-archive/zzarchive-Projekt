@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>What is Projekt?
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A command line tool for creating and updating F# project files"/>
+    <meta name="author" content="Karl Nilsson and Robin Neatherway"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/Projekt/content/style.css" />
+    <script type="text/javascript" src="/Projekt/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/fsprojects/projekt">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/Projekt/index.html">Projekt</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="What-is-Projekt" class="anchor" href="#What-is-Projekt">What is Projekt?</a></h1>
+
+<p>Projekt is a tool for generating and managing F# project (<code>.fsproj</code>)
+files, designed to be used with lightweight text editors. There are
+two reasons for using <code>.fsproj</code> files in your F# development:</p>
+
+<ol>
+<li><p>Visual Studio and Xamarin Studio/Monodevelop both use this project
+format. If you are interested in working with others, or making
+your project easy to approach, then this is the way to go.</p></li>
+<li><p>All intellisense tools for F# currently require an <code>.fsproj</code> file
+as a basis for describing the project. This isn't a fundamental
+limitation, but this is how
+<a href="http://github.com/fsharp/FSharp.Compiler.Service">FSharp.Compiler.Service</a>
+currently works.</p></li>
+</ol>
+
+<h2><a name="How-to-get-Projekt" class="anchor" href="#How-to-get-Projekt">How to get Projekt</a></h2>
+
+<p>Projekt is currently available as a <a href="https://github.com/fsprojects/Projekt/releases/latest">download from GitHub.com</a>.</p>
+
+<h2><a name="Getting-Started" class="anchor" href="#Getting-Started">Getting Started</a></h2>
+
+<p>As this tool is designed to be integrated with editors, this
+documentation is intended for developers. To start using the tool,
+either:</p>
+
+<ol>
+<li>Clone <a href="https://github.com/fsprojects/Projekt">the source</a> and build with <code>build.cmd</code> (Windows) or
+<code>build.sh</code> (Unix), or</li>
+<li>Download the latest <a href="https://github.com/fsprojects/Projekt/releases/latest">release archive</a>.</li>
+</ol>
+
+<p>Projekt is intended to be invoked from the command line, and has a
+number of 'subcommands', much like Git or
+<a href="https://github.com/fsprojects/Paket">Paket</a>. All commands except
+<code>version</code> expect an <code>.fsproj</code> file to be passed as the first argument,
+and any that manipulate the F# source files and project file
+referenced by the <code>.fsproj</code> file also require a second argument. The
+help text below lists the commands and the various command-specific
+arguments.</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]
+
+        --template &lt;string&gt;: init -- specify the template (library|console) [default: library]
+        --frameworkversion [-fxv] &lt;string&gt;: init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]
+        --organisation &lt;string&gt;: init -- specify the organisation
+        --direction &lt;string&gt;: movefile -- specify the direction (down|up)
+        --repeat &lt;int&gt;: movefile -- specify the distance [default: 1]
+        --link &lt;string&gt;: addfile -- specify an optional Link attribute
+        --compile &lt;bool&gt;: addfile -- should the file be compiled or not  [default: true]
+        --help [-h|/h|/help|/?]: display this list of options.
+</code></pre></td></tr></table>
+
+<h2><a name="Example-Usage" class="anchor" href="#Example-Usage">Example Usage</a></h2>
+
+<h4><a name="Generate-a-new-project" class="anchor" href="#Generate-a-new-project">Generate a new project</a></h4>
+
+<p>Use the <code>init</code> subcommand. One possible usage is:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt init MyProject.fsproj --template console --organisation MyOrganisation
+</code></pre></td></tr></table>
+
+<h4><a name="Add-a-file-to-a-project" class="anchor" href="#Add-a-file-to-a-project">Add a file to a project</a></h4>
+
+<p>To add the file <code>MyFile.fs</code> to the project <code>MyProject.fsproj</code> (where
+both are in the current directory), the following command should be
+used:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt addfile MyProject.fsproj MyFile.fs
+</code></pre></td></tr></table>
+
+<h4><a name="Change-order-of-files-in-a-project" class="anchor" href="#Change-order-of-files-in-a-project">Change order of files in a project</a></h4>
+
+<p>The order of compilation is important in F# projects. The previous
+command would add the file <code>MyFile.fs</code> as the last file in the
+project. To move the file <code>MyFile.fs</code> up by two, use:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt movefile MyProject.fsproj MyFile.fs --direction up --repeat 2
+</code></pre></td></tr></table>
+
+<h4><a name="Reference-another-project" class="anchor" href="#Reference-another-project">Reference another project</a></h4>
+
+<p>Use the <code>reference</code> command:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt reference MyProject.fsproj ../AnotherProject/AnotherProject.fsproj 
+</code></pre></td></tr></table>
+
+<h2><a name="Contributing-and-copyright" class="anchor" href="#Contributing-and-copyright">Contributing and copyright</a></h2>
+
+<p>The project is hosted on <a href="https://github.com/fsprojects/Projekt">GitHub</a> where you can <a href="https://github.com/fsprojects/Projekt/issues">report issues</a>, fork the project and submit pull requests.</p>
+
+<p>Please see the <a href="https://github.com/fsprojects/Projekt/blob/master/README.md">Quick contributing guide in the README</a> for contribution guidelines.</p>
+
+<p>The library is available under MIT license, which allows modification and redistribution for both commercial and non-commercial purposes.
+For more information see the <a href="http://fsprojects.github.io/Projekt/license.html">License file</a>.</p>
+
+
+        </div>
+        <div class="span3">
+          <img src="/Projekt/img/logo.png" alt="F# Project" style="width:150px;margin:10px" />  
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">Projekt</li>
+            <li><a href="/Projekt/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://github.com/fsprojects/projekt">Source Code on GitHub</a></li>
+            <li><a href="/Projekt/license.html">License</a></li>
+            <li><a href="/Projekt/release-notes.html">Release Notes</a></li>
+            
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/fsprojects/projekt"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>
