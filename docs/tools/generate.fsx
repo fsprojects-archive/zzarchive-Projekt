@@ -13,7 +13,7 @@ let referenceBinaries = []
 // Web site location for the generated documentation
 let website = "/Projekt"
 
-let githubLink = "http://github.com/kjnilsson/projekt"
+let githubLink = "http://github.com/fsprojects/projekt"
 
 // Specify more information about your project
 let info =

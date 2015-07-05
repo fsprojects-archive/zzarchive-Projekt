@@ -1,2 +1,2 @@
-#### 0.0.1-alpha - 10-06-2015
-* Initial configuration of ProjectScaffold
+#### 0.0.1-alpha - 05-06-2015
+* Initial release of Projekt
