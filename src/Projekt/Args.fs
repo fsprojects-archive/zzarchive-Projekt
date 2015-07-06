@@ -57,7 +57,7 @@ let (|FullPath|_|) (path : string) =
     with
     | _ -> None
 
-let commandUsage = "projekt (init|reference|newfile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]"
+let commandUsage = "projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]"
 
 let parse (ToList args) : Result<Operation> =
     try

@@ -357,7 +357,6 @@ Target "All" DoNothing
   ==> "Build"
   ==> "CopyBinaries"
   ==> "RunTests"
-  ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
   ==> "All"
   =?> ("ReleaseDocs",isLocalBuild)
@@ -372,7 +371,6 @@ Target "All" DoNothing
 
 "CleanDocs"
   ==> "GenerateHelp"
-  ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
 
 "CleanDocs"
@@ -381,8 +379,8 @@ Target "All" DoNothing
 "GenerateHelp"
   ==> "KeepRunning"
     
-// "ReleaseDocs"
-//   ==> "Release"
+"ReleaseDocs"
+  ==> "Release"
 
 // "BuildPackage"
 //   ==> "PublishNuget"
