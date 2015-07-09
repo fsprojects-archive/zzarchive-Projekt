@@ -326,10 +326,33 @@ Target "ReleaseDocs" (fun _ ->
     Branches.push tempDocsDir
 )
 
-#load "paket-files/fsharp/FAKE/modules/Octokit/Octokit.fsx"
+#load "lib/Octokit.fsx"
 open Octokit
 
+let readString prompt echo : string =
+  let rec loop cs =
+    let key = Console.ReadKey(not echo)
+    match key.Key with
+    | ConsoleKey.Backspace -> match cs with
+                              | [] -> loop []
+                              | _::cs -> loop cs
+    | ConsoleKey.Enter -> cs
+    | _ -> loop (key.KeyChar :: cs)
+
+  printf "%s" prompt
+  let input =
+    loop []
+    |> List.rev
+    |> Array.ofList
+    |> fun cs -> new String(cs)
+  if not echo then
+    printfn ""
+  input
+
 Target "Release" (fun _ ->
+    let user = readString "Username: " true
+    let pw = readString "Password: " false
+
     StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
     Branches.push ""
@@ -338,7 +361,7 @@ Target "Release" (fun _ ->
     Branches.pushTag "" "origin" release.NugetVersion
     
     // release on github
-    createClient (getBuildParamOrDefault "github-user" "") (getBuildParamOrDefault "github-pw" "")
+    createClient user pw
     |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes 
     |> uploadFile releaseArchive
     |> releaseDraft
