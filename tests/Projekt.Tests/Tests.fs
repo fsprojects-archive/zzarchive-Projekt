@@ -8,6 +8,8 @@ open NUnit.Framework
 open Projekt.Util
 open FsUnit
 
+let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e -> false
+
 let assertDeepEquals expected result =
   Assert.IsTrue (XNode.DeepEquals(expected, result),
                  "Expected: {0}, result: {1}", expected, result)
@@ -206,17 +208,21 @@ let delInput = """<?xml version="1.0" encoding="utf-8"?>
 </Project>
 """
 
-let delExpected = """<?xml version="1.0" encoding="utf-8"?>
+let delExpected =
+    let emptyItemGroup = if runningOnMono then "<ItemGroup></ItemGroup>" else "<ItemGroup />"
+
+    """<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
     <AssemblyName>Test</AssemblyName>
     <Name>Test</Name>
   </PropertyGroup>
-  <ItemGroup>
-  </ItemGroup>
-</Project>
-"""
+    """
+    + emptyItemGroup +
+    """
+    </Project>
+    """
 
 [<Test>]
 let ``delFile should remove file if present`` () =
@@ -291,7 +297,9 @@ let delMultipleIGInput = """<?xml version="1.0" encoding="utf-8"?>
 </Project>
 """
 
-let delMultipleIGExpected = """<?xml version="1.0" encoding="utf-8"?>
+let delMultipleIGExpected =
+    let emptyItemGroup = if runningOnMono then "<ItemGroup></ItemGroup>" else "<ItemGroup />"
+    """<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
@@ -305,11 +313,11 @@ let delMultipleIGExpected = """<?xml version="1.0" encoding="utf-8"?>
   <ItemGroup>
     <Compile Include="Test3.fs" />
   </ItemGroup>
-  <ItemGroup>
-  </ItemGroup>
-</Project>
-"""
-
+    """
+    + emptyItemGroup +
+    """
+    </Project>
+    """
 
 [<Test>]
 let ``delFile should remove file in later ItemGroups`` () =
