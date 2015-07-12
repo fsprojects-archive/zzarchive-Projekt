@@ -26,12 +26,11 @@ let main argv =
         | Success el -> save el path
         | Failure msg -> eprintfn "%s" msg; 1
 
-    let templatesDir = 
-        //slight hack to allow the templates directory to be located 
-        //in the same directory as the exe for distribution 
-        let cur = Reflection.Assembly.GetExecutingAssembly().CodeBase </> "templates"
+    let templatesDir =
+        let exeDir = Path.GetDirectoryName (Environment.GetCommandLineArgs().[0])
+        let cur = exeDir </> "templates"
         if Directory.Exists cur then cur
-        else "templates" 
+        else eprintfn "Error: project template directory not found at '%s'" cur; exit 1
     
     match op with
     | Init data ->
