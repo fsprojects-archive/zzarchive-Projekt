@@ -5,8 +5,14 @@ open System.Xml.Linq
 
 [<EntryPoint>]
 let main argv =
+    let newOp = 
+        match Args.NewArgs.parse argv with
+        | Success op -> op 
+        | Failure msg ->
+            eprintfn "%s" msg
+            Exit
     let op = 
-        match Args.parse argv with
+        match Args.OldArgs.parse argv with
         | Success op -> op 
         | Failure msg ->
             eprintfn "%s" msg
