@@ -6,73 +6,85 @@ module Args =
     open CommandLine
 
     [<Verb("init", HelpText = "create a new project")>]
-    type public InitOptions = 
-        {   [<Value(0, Required = true, MetaName = "project path")>]    path : string 
-            [<Option(Default = "library")>]                             template : string
-            [<Option(Default = "4.5")>]                                 frameworkVersion : string
-            [<Option>]                                                  organization : string option    }
+    type InitOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] Path : string 
+          [<Option(Default = "library")>] Template : string
+          [<Option(Default = "4.5")>] FrameworkVersion : string
+          [<Option>] Organization : string option }
     with 
         member x.ToOperation =
-            match x.path with
+            match x.Path with
             | FullPath p -> 
-                let template = x.template |> Template.Create |> Some
-                let frmwkVersion = x.frameworkVersion |> FrameworkVersion.Create |> Some
+                let template = x.Template |> Template.Create |> Some
+                let frmwkVersion = x.FrameworkVersion |> FrameworkVersion.Create |> Some
                 (ProjectInitData.create 
                     p 
                     template
                     frmwkVersion
-                    x.organization) |> Init
+                    x.Organization) |> Init
 
             | _ -> failwith "not given a full path"
 
     [<Verb("reference", HelpText = "reference a dll")>]
-    type public ReferenceOptions = 
-        {   [<Value(0, Required = true, MetaName = "project path")>]    projectPath : string
-            [<Value(1, Required = true, MetaName = "reference path")>]  referencePath : string  }
+    type ReferenceOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "reference path")>] ReferencePath : string }
     with 
         member x.ToOperation =
-            match x.projectPath, x.referencePath with
+            match x.ProjectPath, x.ReferencePath with
             | FullPath project, FullPath reference ->
-                {ProjPath = project; Reference = reference} |> Reference
+                { ProjPath = project
+                  Reference = reference }
+                |> Reference
             | _,_ -> failwith "one or both paths were invalid"
 
     [<Verb("movefile", HelpText = "Move a file within a project")>]
-    type public MoveFileOptions = 
-        {   [<Value(0, Required = true, MetaName = "project path")>]    projectPath : string
-            [<Value(1, Required = true, MetaName = "file path")>]       filePath : string
-            [<Option(Required = true)>]                                 direction : string
-            [<Option(Default = 1)>]                                     repeat : int    }
+    type MoveFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
+          [<Option(Required = true)>] direction : string
+          [<Option(Default = 1)>] repeat : int }
     with
         member x.ToOperation =
-            match x.projectPath, x.filePath, Direction.Create x.direction with
+            match x.ProjectPath, x.FilePath, Direction.Create x.direction with
             | FullPath project, FullPath file, dir -> 
-                {ProjPath = project; FilePath = file; Direction = dir; Repeat = x.repeat} |> MoveFile
+                { ProjPath = project
+                  FilePath = file
+                  Direction = dir
+                  Repeat = x.repeat }
+                |> MoveFile
             | _,_,_ -> failwith "invalid paths or direction"
 
     [<Verb("addfile", HelpText = "Add a file to a project")>]
-    type public AddFileOptions = 
-        {   [<Value(0, Required = true, MetaName = "project path")>]    projectPath : string
-            [<Value(1, Required = true, MetaName = "file path")>]       filePath : string
-            [<Option>]                                                  link : string option
-            [<Option(Default = true)>]                                  compile : bool  }
+    type AddFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
+          [<Option>] link : string option
+          [<Option(Default = true)>] compile : bool }
     with 
         member x.ToOperation =
-            match x.projectPath, x.filePath with
+            match x.ProjectPath, x.FilePath with
             | FullPath project, FullPath file -> 
-                {ProjPath = project; FilePath = file; Link = x.link; Compile = x.compile} |> AddFile 
+                { ProjPath = project
+                  FilePath = file
+                  Link = x.link
+                  Compile = x.compile } 
+                |> AddFile 
             | _,_ -> failwith "invalid paths"
 
     [<Verb("delfile", HelpText = "Delete a file from a project")>]
-    type public DelFileOptions = 
-        {   [<Value(0, Required = true, MetaName = "project path")>]    projectPath : string
-            [<Value(1, Required = true, MetaName = "file path")>]       filePath : string   }
+    type DelFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string   }
     with
         member x.ToOperation =
-            match x.projectPath, x.filePath with
+            match x.ProjectPath, x.FilePath with
             | FullPath project, FullPath file -> 
                 // typing needed here because of the duplication between MoveFileData and DelFileData records
                 // TODO: maybe consolidate?
-                ({ProjPath = project; FilePath = file} : DelFileData) |> DelFile 
+                ({ ProjPath = project 
+                   FilePath = file } : DelFileData)
+                |> DelFile 
             | _,_ -> failwith "invalid paths"
 
     let parse args = 
