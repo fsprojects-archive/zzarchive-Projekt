@@ -90,7 +90,8 @@ Target "AssemblyInfo" (fun _ ->
           Attribute.Description summary
           Attribute.Version release.AssemblyVersion
           Attribute.FileVersion release.AssemblyVersion
-          Attribute.InternalsVisibleTo "Projekt.Tests" ]
+          Attribute.InternalsVisibleTo "Projekt.Tests"
+          Attribute.Company "fsprojects" ]
 
     let getProjectDetails projectPath =
         let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)

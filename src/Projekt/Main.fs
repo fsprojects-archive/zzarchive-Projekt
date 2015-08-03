@@ -8,15 +8,7 @@ let main argv =
     let newOp = 
         match Args.NewArgs.parse argv with
         | Success op -> op 
-        | Failure msg ->
-            eprintfn "%s" msg
-            Exit
-    let op = 
-        match Args.OldArgs.parse argv with
-        | Success op -> op 
-        | Failure msg ->
-            eprintfn "%s" msg
-            Exit
+        | Failure _ -> Exit
 
     let save (el : XElement) (path: string) =
         try
@@ -38,7 +30,7 @@ let main argv =
         if Directory.Exists cur then cur
         else eprintfn "Error: project template directory not found at '%s'" cur; exit 1
     
-    match op with
+    match newOp with
     | Init data ->
         match Template.init templatesDir data with
         | Success _ -> 0

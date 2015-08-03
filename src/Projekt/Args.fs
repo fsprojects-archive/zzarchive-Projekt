@@ -80,7 +80,6 @@ module NewArgs =
         // tried to get fancy here with a statically resolved type param to invoke the ToOperation member on the individal option cases, but I couldn't get it to work....
 
         result {
-            try 
                 return 
                     parsed.Return<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions, VersionOptions, Operation>(
                         (fun (init : InitOptions) -> init.ToOperation), 
@@ -91,8 +90,6 @@ module NewArgs =
                         (fun (ver : VersionOptions) -> ver.ToOperation), 
                         (fun errs -> printfn "%A" errs; Operation.Exit)
                     )
-            with
-                | _ -> return Operation.Exit
         }
         
 

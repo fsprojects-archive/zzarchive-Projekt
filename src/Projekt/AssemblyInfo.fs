@@ -8,6 +8,7 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyVersionAttribute("0.0.2")>]
 [<assembly: AssemblyFileVersionAttribute("0.0.2")>]
 [<assembly: InternalsVisibleToAttribute("Projekt.Tests")>]
+[<assembly: AssemblyCompanyAttribute("fsprojects")>]
 do ()
 
 module internal AssemblyVersionInformation =
