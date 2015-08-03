@@ -25,7 +25,7 @@ module Args =
 
             | _ -> failwith "not given a full path"
 
-    [<Verb("reference", HelpText = "reference a dll")>]
+    [<Verb("reference", HelpText = "reference another dependency in this project")>]
     type ReferenceOptions = 
         { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
           [<Value(1, Required = true, MetaName = "reference path")>] ReferencePath : string }
