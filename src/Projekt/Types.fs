@@ -7,9 +7,9 @@ type Template =
     with 
         static member Create arg = 
             match arg with
-            | Some (ToLower "console") -> Console
-            | Some (ToLower "library") -> Library
-            | None -> Library
+            | ToLower "console" -> Console
+            | ToLower "library" -> Library
+            | "" -> Library
             | _ -> failwith "invalid template argument specified"
 
 type Direction =
@@ -29,10 +29,10 @@ type FrameworkVersion =
 with 
     static member Create arg = 
         match arg with 
-        | Some "4.0" -> V4_0
-        | Some "4.5" -> V4_5 
-        | Some "4.5.1" -> V4_5_1
-        | None -> V4_5
+        | "4.0" -> V4_0
+        | "4.5" -> V4_5 
+        | "4.5.1" -> V4_5_1
+        | "" -> V4_5
         | _ -> failwith "invalid framework version argument specified"
 
     override x.ToString () =
@@ -80,7 +80,6 @@ type Operation =
     | DelFile of DelFileData
     | MoveFile of MoveFileData
     | Exit
-    | Version
 
 type Result<'a> =
     | Success of 'a

@@ -465,15 +465,3 @@ let ``moveFile down 2`` () =
 </Project>
 """
         assertDeepEquals expected result
-
-module Parsing =
-    let lines = [
-       "init C:\code" 
-    ]
-        
-    [<TestCaseSource("lines")>]
-    let ``old and new parsers should be equivalent`` (inputline : string) =
-        let splits = inputline.Split(' ');
-        let oldVersion = Args.OldArgs.parse splits
-        let newVersion = Args.NewArgs.parse splits
-        Assert.AreEqual(oldVersion, newVersion)

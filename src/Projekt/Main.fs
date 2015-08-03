@@ -6,10 +6,10 @@ open System.Xml.Linq
 [<EntryPoint>]
 let main argv =
     let newOp = 
-        match Args.NewArgs.parse argv with
+        match Args.Args.parse argv with
         | Success op -> op 
         | Failure _ -> Exit
-
+            
     let save (el : XElement) (path: string) =
         try
             el.Save path
@@ -53,10 +53,6 @@ let main argv =
         Project.addReference path reference
         |> saveOrPrintError path
 
-    | Version ->
-        printfn "projekt %s" AssemblyVersionInformation.Version
-        0
-          
     | _ -> 
         1
 
