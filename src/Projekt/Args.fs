@@ -4,6 +4,7 @@ open Projekt.Types
 
 module Args =
     open CommandLine
+    open CommandLine.Text
 
     [<Verb("init", HelpText = "create a new project")>]
     type InitOptions = 
@@ -24,9 +25,17 @@ module Args =
                     x.Organization) |> Init
 
             | _ -> failwith "not given a full path"
+        [<Usage(ApplicationAlias = "projekt")>]
+        static member Examples 
+            with get () = 
+                seq {
+                    yield Example("normal usage", {Path = @"c:\code\projekt\"; Template = ""; FrameworkVersion = ""; Organization = None})
+                    yield Example("make an exe project", {Path = @"c:\code\projekt\"; Template = "console"; FrameworkVersion = ""; Organization = None})
+                    yield Example("target .net 4.0", {Path = @"c:\code\projekt\"; Template = ""; FrameworkVersion = "4.0"; Organization = None})
+                }
 
     [<Verb("reference", HelpText = "reference another dependency in this project")>]
-    type ReferenceOptions = 
+    type private ReferenceOptions = 
         { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
           [<Value(1, Required = true, MetaName = "reference path")>] ReferencePath : string }
     with 
@@ -39,7 +48,7 @@ module Args =
             | _,_ -> failwith "one or both paths were invalid"
 
     [<Verb("movefile", HelpText = "Move a file within a project")>]
-    type MoveFileOptions = 
+    type private MoveFileOptions = 
         { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
           [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
           [<Option(Required = true)>] direction : string
@@ -56,7 +65,7 @@ module Args =
             | _,_,_ -> failwith "invalid paths or direction"
 
     [<Verb("addfile", HelpText = "Add a file to a project")>]
-    type AddFileOptions = 
+    type private AddFileOptions = 
         { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
           [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
           [<Option>] link : string option
@@ -73,7 +82,7 @@ module Args =
             | _,_ -> failwith "invalid paths"
 
     [<Verb("delfile", HelpText = "Delete a file from a project")>]
-    type DelFileOptions = 
+    type private DelFileOptions = 
         { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
           [<Value(1, Required = true, MetaName = "file path")>] FilePath : string   }
     with
@@ -87,8 +96,10 @@ module Args =
                 |> DelFile 
             | _,_ -> failwith "invalid paths"
 
+    let private parser = CommandLine.Parser.Default
+
     let parse args = 
-        let parsed = CommandLine.Parser.Default.ParseArguments<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions>(args)
+        let parsed = parser.ParseArguments<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions>(args)
         // tried to get fancy here with a statically resolved type param to invoke the ToOperation member on the individal option cases, but I couldn't get it to work....
 
         parsed.Return<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions, Result<Operation>>(
