@@ -4,16 +4,37 @@ module Projekt.Types
 type Template =
     | Console
     | Library
+    with 
+        static member Create arg = 
+            match arg with
+            | ToLower "console" -> Console
+            | ToLower "library" -> Library
+            | "" -> Library
+            | _ -> failwith "invalid template argument specified"
 
 type Direction =
     | Up
     | Down
+    with
+        static member Create arg =
+            match arg with
+            | ToLower "up" -> Up
+            | ToLower "down" -> Down
+            | _ -> failwith "invalid direction specified"
 
 type FrameworkVersion =
     | V4_0
     | V4_5
     | V4_5_1
 with 
+    static member Create arg = 
+        match arg with 
+        | "4.0" -> V4_0
+        | "4.5" -> V4_5 
+        | "4.5.1" -> V4_5_1
+        | "" -> V4_5
+        | _ -> failwith "invalid framework version argument specified"
+
     override x.ToString () =
         match x with
         | V4_0 -> "4.0"
@@ -26,7 +47,7 @@ type ProjectInitData =
       FrameworkVersion: FrameworkVersion
       Organisation: string}
 with 
-    static member create (path, ?template, ?fxversion, ?org) =
+    static member create path template fxversion org =
         { ProjPath = path
           Template = defaultArg template Library
           FrameworkVersion = defaultArg fxversion V4_5
@@ -59,7 +80,6 @@ type Operation =
     | DelFile of DelFileData
     | MoveFile of MoveFileData
     | Exit
-    | Version
 
 type Result<'a> =
     | Success of 'a

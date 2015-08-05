@@ -1,111 +1,113 @@
 module Projekt.Args
 
 open Projekt.Types
-open System.IO
-open Nessos.UnionArgParser
 
-type private Args =
-    | Template of string
-    | [<AltCommandLine("-fxv")>] FrameworkVersion of string
-    | Organisation of string
-    | Direction of string
-    | Repeat of int
-    | Link of string
-    | Compile of bool
-with
-    interface IArgParserTemplate with
-        member s.Usage = 
-            match s with
-            | Template _ -> "init -- specify the template (library|console) [default: library]"
-            | Direction _ -> "movefile -- specify the direction (down|up)"
-            | Repeat _ -> "movefile -- specify the distance [default: 1]"
-            | FrameworkVersion _ -> "init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]"
-            | Organisation _ -> "init -- specify the organisation"
-            | Link _ -> "addfile -- specify an optional Link attribute"
-            | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
+module Args =
+    open CommandLine
+    open CommandLine.Text
 
-let private templateArg (res : ArgParseResults<Args>) =
-    match res.TryGetResult(<@ Template @>) with
-    | Some (ToLower "console") -> Console
-    | Some (ToLower "library") -> Library
-    | None -> Library
-    | _ -> failwith "invalid template argument specified"
+    [<Verb("init", HelpText = "create a new project")>]
+    type InitOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] Path : string 
+          [<Option(Default = "library")>] Template : string
+          [<Option(Default = "4.5")>] FrameworkVersion : string
+          [<Option>] Organization : string option }
+    with 
+        member x.ToOperation =
+            match x.Path with
+            | FullPath p -> 
+                let template = x.Template |> Template.Create |> Some
+                let frmwkVersion = x.FrameworkVersion |> FrameworkVersion.Create |> Some
+                (ProjectInitData.create 
+                    p 
+                    template
+                    frmwkVersion
+                    x.Organization) |> Init
 
-let private frameworkVersionArg (res : ArgParseResults<Args>) =
-    match res.TryGetResult(<@ FrameworkVersion @>) with
-    | Some "4.0" -> V4_0
-    | Some "4.5" -> V4_5 
-    | Some "4.5.1" -> V4_5_1
-    | None -> V4_5
-    | _ -> failwith "invalid framework version argument specified"
+            | _ -> failwith "not given a full path"
+        [<Usage(ApplicationAlias = "projekt")>]
+        static member Examples 
+            with get () = 
+                seq {
+                    yield Example("normal usage", {Path = @"c:\code\projekt\"; Template = ""; FrameworkVersion = ""; Organization = None})
+                    yield Example("make an exe project", {Path = @"c:\code\projekt\"; Template = "console"; FrameworkVersion = ""; Organization = None})
+                    yield Example("target .net 4.0", {Path = @"c:\code\projekt\"; Template = ""; FrameworkVersion = "4.0"; Organization = None})
+                }
 
-let private parseDirection s =
-    match s with
-    | ToLower "up" -> Up
-    | ToLower "down" -> Down
-    | _ -> failwith "invalid direction specified"
+    [<Verb("reference", HelpText = "reference another dependency in this project")>]
+    type private ReferenceOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "reference path")>] ReferencePath : string }
+    with 
+        member x.ToOperation =
+            match x.ProjectPath, x.ReferencePath with
+            | FullPath project, FullPath reference ->
+                { ProjPath = project
+                  Reference = reference }
+                |> Reference
+            | _,_ -> failwith "one or both paths were invalid"
 
-let private parser = UnionArgParser.Create<Args>()
-
-let private (|Options|) (args : string list) =
-    let results = parser.Parse(List.toArray args)
-    results
-
-let (|FullPath|_|) (path : string) =
-    try 
-        Path.GetFullPath path |> Some
+    [<Verb("movefile", HelpText = "Move a file within a project")>]
+    type private MoveFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
+          [<Option(Required = true)>] direction : string
+          [<Option(Default = 1)>] repeat : int }
     with
-    | _ -> None
+        member x.ToOperation =
+            match x.ProjectPath, x.FilePath, Direction.Create x.direction with
+            | FullPath project, FullPath file, dir -> 
+                { ProjPath = project
+                  FilePath = file
+                  Direction = dir
+                  Repeat = x.repeat }
+                |> MoveFile
+            | _,_,_ -> failwith "invalid paths or direction"
 
-let commandUsage = "projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]"
+    [<Verb("addfile", HelpText = "Add a file to a project")>]
+    type private AddFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string
+          [<Option>] link : string option
+          [<Option(Default = true)>] compile : bool }
+    with 
+        member x.ToOperation =
+            match x.ProjectPath, x.FilePath with
+            | FullPath project, FullPath file -> 
+                { ProjPath = project
+                  FilePath = file
+                  Link = x.link
+                  Compile = x.compile } 
+                |> AddFile 
+            | _,_ -> failwith "invalid paths"
 
-let parse (ToList args) : Result<Operation> =
-    try
-        match args with
-        | [] -> 
-            parser.Usage commandUsage 
-            |> Failure
-
-        | ToLower "version" :: _ ->
-            Success Version
-
-        | ToLower "init" :: FullPath path :: Options opts -> 
-            let template = templateArg opts
-            let fxv = frameworkVersionArg opts
-            let org = 
-                match opts.TryGetResult(<@ Organisation @>) with
-                | Some org -> org
-                | None -> "MyOrg"
-            Init (ProjectInitData.create (path, template, fxv, org)) |> Success
-            
-        | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts ->
-            let compile = opts.GetResult(<@ Compile @>, true)
-            AddFile { ProjPath = project
-                      FilePath = file
-                      Link = opts.TryGetResult <@ Link @>
-                      Compile = compile }
-            |> Success
-            
-        | [ToLower "delfile"; FullPath project; FullPath file] -> 
-            DelFile { ProjPath = project; FilePath = file }
-            |> Success
-            
-        | ToLower "movefile" :: FullPath project :: FullPath file :: Options opts
-                when opts.Contains <@ Direction @> ->
-
-            let direction = opts.PostProcessResult(<@ Direction @>, parseDirection)
-            MoveFile { ProjPath = project
-                       FilePath = file
-                       Direction = direction
-                       Repeat = opts.GetResult(<@ Repeat @>, 1)}
-            |> Success
-            
-        | [ToLower "reference"; FullPath project; FullPath reference] -> 
-            Reference { ProjPath = project; Reference = reference } |> Success
-
-        | _ -> Failure (parser.Usage (sprintf "Error: '%s' is not a recognized command or received incorrect arguments.\n\n%s" args.Head commandUsage))
+    [<Verb("delfile", HelpText = "Delete a file from a project")>]
+    type private DelFileOptions = 
+        { [<Value(0, Required = true, MetaName = "project path")>] ProjectPath : string
+          [<Value(1, Required = true, MetaName = "file path")>] FilePath : string   }
     with
-    | :? System.ArgumentException as e ->
-            let lines = e.Message.Split([|'\n'|])
-            let msg = parser.Usage (sprintf "%s\n\n%s" lines.[0] commandUsage)
-            Failure msg
+        member x.ToOperation =
+            match x.ProjectPath, x.FilePath with
+            | FullPath project, FullPath file -> 
+                // typing needed here because of the duplication between MoveFileData and DelFileData records
+                // TODO: maybe consolidate?
+                ({ ProjPath = project 
+                   FilePath = file } : DelFileData)
+                |> DelFile 
+            | _,_ -> failwith "invalid paths"
+
+    let private parser = CommandLine.Parser.Default
+
+    let parse args = 
+        let parsed = parser.ParseArguments<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions>(args)
+        // tried to get fancy here with a statically resolved type param to invoke the ToOperation member on the individal option cases, but I couldn't get it to work....
+
+        parsed.Return<InitOptions, ReferenceOptions, MoveFileOptions, AddFileOptions, DelFileOptions, Result<Operation>>(
+            (fun (init : InitOptions) -> init.ToOperation |> Success), 
+            (fun (ref : ReferenceOptions) -> ref.ToOperation |> Success), 
+            (fun (mv : MoveFileOptions) -> mv.ToOperation |> Success), 
+            (fun (add : AddFileOptions) -> add.ToOperation |> Success), 
+            (fun (del : DelFileOptions) -> del.ToOperation |> Success), 
+            (fun errs -> errs |> Seq.map (fun e -> e.ToString()) |> String.concat ";" |> Failure)
+        )
+        

@@ -5,13 +5,11 @@ open System.Xml.Linq
 
 [<EntryPoint>]
 let main argv =
-    let op = 
-        match Args.parse argv with
+    let newOp = 
+        match Args.Args.parse argv with
         | Success op -> op 
-        | Failure msg ->
-            eprintfn "%s" msg
-            Exit
-
+        | Failure _ -> Exit
+            
     let save (el : XElement) (path: string) =
         try
             el.Save path
@@ -32,7 +30,7 @@ let main argv =
         if Directory.Exists cur then cur
         else eprintfn "Error: project template directory not found at '%s'" cur; exit 1
     
-    match op with
+    match newOp with
     | Init data ->
         match Template.init templatesDir data with
         | Success _ -> 0
@@ -55,10 +53,6 @@ let main argv =
         Project.addReference path reference
         |> saveOrPrintError path
 
-    | Version ->
-        printfn "projekt %s" AssemblyVersionInformation.Version
-        0
-          
     | _ -> 
         1
 
