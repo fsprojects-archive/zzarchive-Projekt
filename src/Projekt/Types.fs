@@ -13,7 +13,7 @@ type FrameworkVersion =
     | V4_0
     | V4_5
     | V4_5_1
-with 
+with
     override x.ToString () =
         match x with
         | V4_0 -> "4.0"
@@ -25,7 +25,7 @@ type ProjectInitData =
       Template: Template
       FrameworkVersion: FrameworkVersion
       Organisation: string}
-with 
+with
     static member create (path, ?template, ?fxversion, ?org) =
         { ProjPath = path
           Template = defaultArg template Library
@@ -41,7 +41,7 @@ type AddFileData =
       FilePath: string
       Link: Option<string>
       Compile: bool }
-    
+
 type DelFileData =
     { ProjPath: string
       FilePath: string }
@@ -52,12 +52,16 @@ type MoveFileData =
       Direction: Direction
       Repeat: int }
 
+type ProjectLocationData =
+    { ProjPath: string }
+
 type Operation =
-    | Init of ProjectInitData //project path 
+    | Init of ProjectInitData //project path
     | Reference of ProjectReferenceData
     | AddFile of AddFileData
     | DelFile of DelFileData
     | MoveFile of MoveFileData
+    | ListFiles of ProjectLocationData
     | Exit
     | Version
 
@@ -102,5 +106,3 @@ type ResultBuilder() =
             x.While(enum.MoveNext,
                 x.Delay(fun () -> body enum.Current)))
 let result = ResultBuilder()
-
-
