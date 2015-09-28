@@ -86,7 +86,7 @@ arguments.</p>
 <span class="l"> 9: </span>
 <span class="l">10: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip"><code lang="batch">projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]
+<td class="snippet"><pre class="fssnip"><code lang="batch">projekt (init|reference|movefile|addfile|delfile|listfiles|version) /path/to/project [/path/to/(file|project)]
 
         --template &lt;string&gt;: init -- specify the template (library|console) [default: library]
         --frameworkversion [-fxv] &lt;string&gt;: init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]
@@ -131,13 +131,24 @@ project. To move the file <code>MyFile.fs</code> up by two, use:</p>
 <td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt movefile MyProject.fsproj MyFile.fs --direction up --repeat 2
 </code></pre></td></tr></table>
 
+<h4><a name="List-the-order-of-files-in-a-project" class="anchor" href="#List-the-order-of-files-in-a-project">List the order of files in a project</a></h4>
+
+<p>The order of compilation is important in F# projects. This command lets you
+see the current ordering of files in the project. To see the order of files in
+<code>MyProject.fsproj</code>, use:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt listfiles MyProject.fsproj
+</code></pre></td></tr></table>
+
 <h4><a name="Reference-another-project" class="anchor" href="#Reference-another-project">Reference another project</a></h4>
 
 <p>Use the <code>reference</code> command:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt reference MyProject.fsproj ../AnotherProject/AnotherProject.fsproj 
+<td class="snippet"><pre class="fssnip"><code lang="batch">&lt;path to projekt&gt;/projekt reference MyProject.fsproj ../AnotherProject/AnotherProject.fsproj
 </code></pre></td></tr></table>
 
 <h2><a name="Contributing-and-copyright" class="anchor" href="#Contributing-and-copyright">Contributing and copyright</a></h2>
