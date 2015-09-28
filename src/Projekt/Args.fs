@@ -14,7 +14,7 @@ type private Args =
     | Compile of bool
 with
     interface IArgParserTemplate with
-        member s.Usage = 
+        member s.Usage =
             match s with
             | Template _ -> "init -- specify the template (library|console) [default: library]"
             | Direction _ -> "movefile -- specify the direction (down|up)"
@@ -34,7 +34,7 @@ let private templateArg (res : ArgParseResults<Args>) =
 let private frameworkVersionArg (res : ArgParseResults<Args>) =
     match res.TryGetResult(<@ FrameworkVersion @>) with
     | Some "4.0" -> V4_0
-    | Some "4.5" -> V4_5 
+    | Some "4.5" -> V4_5
     | Some "4.5.1" -> V4_5_1
     | None -> V4_5
     | _ -> failwith "invalid framework version argument specified"
@@ -52,32 +52,32 @@ let private (|Options|) (args : string list) =
     results
 
 let (|FullPath|_|) (path : string) =
-    try 
+    try
         Path.GetFullPath path |> Some
     with
     | _ -> None
 
-let commandUsage = "projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]"
+let commandUsage = "projekt (init|reference|movefile|addfile|delfile|listfiles|version) /path/to/project [/path/to/(file|project)]"
 
 let parse (ToList args) : Result<Operation> =
     try
         match args with
-        | [] -> 
-            parser.Usage commandUsage 
+        | [] ->
+            parser.Usage commandUsage
             |> Failure
 
         | ToLower "version" :: _ ->
             Success Version
 
-        | ToLower "init" :: FullPath path :: Options opts -> 
+        | ToLower "init" :: FullPath path :: Options opts ->
             let template = templateArg opts
             let fxv = frameworkVersionArg opts
-            let org = 
+            let org =
                 match opts.TryGetResult(<@ Organisation @>) with
                 | Some org -> org
                 | None -> "MyOrg"
             Init (ProjectInitData.create (path, template, fxv, org)) |> Success
-            
+
         | ToLower "addfile" :: FullPath project :: FullPath file :: Options opts ->
             let compile = opts.GetResult(<@ Compile @>, true)
             AddFile { ProjPath = project
@@ -85,11 +85,11 @@ let parse (ToList args) : Result<Operation> =
                       Link = opts.TryGetResult <@ Link @>
                       Compile = compile }
             |> Success
-            
-        | [ToLower "delfile"; FullPath project; FullPath file] -> 
+
+        | [ToLower "delfile"; FullPath project; FullPath file] ->
             DelFile { ProjPath = project; FilePath = file }
             |> Success
-            
+
         | ToLower "movefile" :: FullPath project :: FullPath file :: Options opts
                 when opts.Contains <@ Direction @> ->
 
@@ -99,8 +99,12 @@ let parse (ToList args) : Result<Operation> =
                        Direction = direction
                        Repeat = opts.GetResult(<@ Repeat @>, 1)}
             |> Success
-            
-        | [ToLower "reference"; FullPath project; FullPath reference] -> 
+
+        | [ToLower "listfiles";FullPath project] ->
+            ListFiles { ProjPath = project }
+            |> Success
+
+        | [ToLower "reference"; FullPath project; FullPath reference] ->
             Reference { ProjPath = project; Reference = reference } |> Success
 
         | _ -> Failure (parser.Usage (sprintf "Error: '%s' is not a recognized command or received incorrect arguments.\n\n%s" args.Head commandUsage))

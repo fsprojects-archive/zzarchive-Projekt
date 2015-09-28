@@ -25,7 +25,7 @@ let (|Guid|_|) s =
 let (|Descendants|_|) name (xe : XElement) =
     match xe.Descendants (xn (msbuildns + name)) with
     | null -> None
-    | desc when not (Seq.isEmpty desc) -> 
+    | desc when not (Seq.isEmpty desc) ->
         Some (desc |> Seq.toList)
     | _ -> None
 
@@ -37,42 +37,49 @@ let (|Descendant|_|) name (xe : XElement) =
 
 let (|Element|_|) name (xe : XElement) =
     match xe.Element (xn (msbuildns + name)) with
-    | null -> None 
+    | null -> None
     | e -> Some e
 
 let (|Attribute|_|) name (xe : XElement) =
     match xe.Attribute (xn name) with
-    | null -> None 
+    | null -> None
     | a -> Some a
 
+let (|Include|_|) name = function
+    | Descendant name d ->
+        match d with
+        | Attribute "Include" i -> Some i
+        | _ -> None
+    | _ -> None
+
 //queries
-let internal projectGuid = 
+let internal projectGuid =
     function
-    | Descendant "ProjectGuid" (Value (Guid pg)) -> 
-        Success pg 
+    | Descendant "ProjectGuid" (Value (Guid pg)) ->
+        Success pg
     | _ -> Failure "err: failed to read project guid."
 
-let internal projectName = 
+let internal projectName =
     function
-    | Descendant "Name" (Value name) -> 
-        Success name 
+    | Descendant "Name" (Value name) ->
+        Success name
     | _ -> Failure "err: failed to read project name."
 
-let internal assemblyName = 
+let internal assemblyName =
     function
-    | Descendant "AssemblyName" (Value name) -> 
-        Success name 
+    | Descendant "AssemblyName" (Value name) ->
+        Success name
     | _ -> Failure "err: failed to read assembly name."
 
-let internal itemGroup = 
+let internal itemGroup =
     function
-    | Descendant "ItemGroup" el -> 
-        Some el 
+    | Descendant "ItemGroup" el ->
+        Some el
     | _ -> None
 
 let internal projectReferenceItemGroup =
     function
-    | Descendant "ProjectReference" e -> 
+    | Descendant "ProjectReference" e ->
         e.Parent |> Some
     | _ -> None
 
@@ -80,7 +87,7 @@ let internal compileItemGroup =
     function
     | Descendant "Compile" el ->
         Some el.Parent
-    | _ -> None  
+    | _ -> None
 
 let internal hasAttr attr value =
     function
@@ -106,7 +113,7 @@ let tryFindElementWithAttrVal (element: string) (attr: string) (value: string) =
 
 let hasProjectReferenceWithInclude incl =
     function
-    | Descendants "ProjectReference" descs -> 
+    | Descendants "ProjectReference" descs ->
         Seq.exists (
             function
             | Attribute "Include" a -> a.Value = incl
@@ -122,12 +129,12 @@ let internal addProjRefNode (path: string) (name: string) (guid : Guid) (el: XEl
               xe "Private" "True" |> box ]
 
     match projectReferenceItemGroup el with
-    | Some _ when hasProjectReferenceWithInclude path el -> 
+    | Some _ when hasProjectReferenceWithInclude path el ->
         Success el
     | Some prig ->
-        prig.Add projRef 
+        prig.Add projRef
         Success el
-    | None -> 
+    | None ->
         let ig = xe "ItemGroup" projRef
         match itemGroup el with
         | Some first ->
@@ -146,7 +153,7 @@ let addReference project reference =
         let relPath = Util.makeRelativePath project reference
         let! proj = load project
         let! reference = load reference
-        let! name = 
+        let! name =
             match projectName reference with
             | Success name -> Success name
             | _ -> assemblyName reference
@@ -232,6 +239,42 @@ let moveFile (project: string) (file: string) (direction: Direction) (repeat: in
     match load project with
     | Failure s -> Failure s
     | Success proj ->
-      
+
     let relpath = makeRelativePath project file
     moveFileNodePosition proj relpath direction repeat
+
+let internal listFilesInProj (proj:XElement) =
+    let findFilesItemGroup p =
+        match p with
+        | Descendants "ItemGroup" descs ->
+            let grp =
+                descs
+                |> List.tryFind (fun e ->
+                    match e with
+                    | Include "Compile" _ -> true
+                    | Include "None" _ -> true
+                    | _ -> false
+                )
+            match grp with
+            | Some g -> Success g
+            | None -> Failure "No ItemGroup contains includes"
+        | _ -> Failure "No ItemGroups in project"
+    let filesInItemGroup (grp:XElement) =
+        grp.Descendants()
+        |> Seq.choose (function
+            | Attribute "Include" file -> Some file.Value
+            | _ -> None
+        )
+        |> Seq.toList
+
+    result {
+      let! grp = findFilesItemGroup proj
+      return filesInItemGroup grp
+    }
+
+let listFiles (project: string) =
+    result {
+      let! proj = load project
+      let! files = listFilesInProj proj
+      return files
+    }

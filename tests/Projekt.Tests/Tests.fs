@@ -40,7 +40,7 @@ let singleIGandTestRef = """<?xml version="1.0" encoding="utf-8"?>
     </ProjectReference>
   </ItemGroup>
 </Project>
-""" 
+"""
 
 [<Test>]
 let ``hasProjectReferenceWithInclude should find`` () =
@@ -48,15 +48,15 @@ let ``hasProjectReferenceWithInclude should find`` () =
     Project.hasProjectReferenceWithInclude "../../src/Test/Test.fsproj" sut
     |> Assert.IsTrue
 
-[<Test>] 
+[<Test>]
 let ``addProjRefNode should append an ItemGroup if none found`` () =
-    let expected = XElement.Parse singleIGandTestRef 
+    let expected = XElement.Parse singleIGandTestRef
     let guid = Guid.Parse "{165a6853-05ed-4f03-a7b1-1c84d4f01bf5}"
     let sut = XElement.Parse baseXml
     let (Success result) = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
     assertDeepEquals expected result
 
-[<Test>] 
+[<Test>]
 let ``addProjRefNode should append a ProjectReference if one already exists`` () =
     let expected = """<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -77,7 +77,7 @@ let ``addProjRefNode should append a ProjectReference if one already exists`` ()
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-</Project>""" 
+</Project>"""
 
     let expected = XElement.Parse expected
     let guid = Guid.Parse "{ceb3e6b3-c06f-4a24-82e6-9e70ba4adfe8}"
@@ -85,10 +85,10 @@ let ``addProjRefNode should append a ProjectReference if one already exists`` ()
     let (Success result) = Project.addProjRefNode "../../src/Test2/Test2.fsproj" "Test2" guid sut
     assertDeepEquals expected result
 
-[<Test>] 
+[<Test>]
 let ``addProjRefNode should be idempotent`` () =
-    let expected = XElement.Parse singleIGandTestRef 
-    let sut = XElement.Parse singleIGandTestRef 
+    let expected = XElement.Parse singleIGandTestRef
+    let sut = XElement.Parse singleIGandTestRef
     let guid = Guid.Parse "{165a6853-05ed-4f03-a7b1-1c84d4f01bf5}"
     let (Success result) = Project.addProjRefNode "../../src/Test/Test.fsproj" "Test" guid sut
     assertDeepEquals expected result
@@ -122,7 +122,7 @@ let ``addFile should create the file if it doesn't exist`` () =
     | Success result ->
         Assert.That(File.Exists srcFile, "File should exist: " + srcFile)
         File.Delete srcFile
-    
+
 [<Test>]
 let ``addFile should create an item group if not present`` () =
     let projFile = __SOURCE_DIRECTORY__ + "/data/AddFile-NoItemGroup-input.fsproj"
@@ -176,7 +176,7 @@ let ``addFile should insert the link`` () =
     | Success result ->
         let expected = XElement.Load (__SOURCE_DIRECTORY__ + "/data/AddFile-Link-expected.fsproj")
         assertDeepEquals expected result
-    
+
 [<Test>]
 let ``addFile followed by delFile should be identity`` () =
     let projFile = __SOURCE_DIRECTORY__ + "/data/AddFile-input.fsproj"
@@ -232,7 +232,7 @@ let ``delFile should remove file if present`` () =
     | Success result ->
         let expected = XElement.Parse delExpected
         assertDeepEquals expected result
-        
+
 [<Test>]
 let ``delFile should fail if not present`` () =
     let proj = XElement.Parse delInput
@@ -465,3 +465,25 @@ let ``moveFile down 2`` () =
 </Project>
 """
         assertDeepEquals expected result
+
+let listInput = """<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Compile Include="File1.fs" />
+    <Compile Include="File2.fs" />
+    <None Include="File3.fs" />
+    <Compile Include="File4.fs" />
+    <Compile Include="File5.fs" />
+    <Compile Include="File6.fs" />
+  </ItemGroup>
+</Project>
+"""
+
+[<Test>]
+let ``list files`` () =
+    let proj = XElement.Parse listInput
+    match Project.listFilesInProj proj with
+    | Failure s -> Assert.Fail s
+    | Success result ->
+        let expected = ["File1.fs" ; "File2.fs" ; "File3.fs" ; "File4.fs" ; "File5.fs" ; "File6.fs"]
+        Assert.AreEqual (expected, result)

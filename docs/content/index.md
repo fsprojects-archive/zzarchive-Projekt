@@ -38,7 +38,7 @@ help text below lists the commands and the various command-specific
 arguments.
 
     [lang=batch]
-    projekt (init|reference|movefile|addfile|delfile|version) /path/to/project [/path/to/(file|project)]
+    projekt (init|reference|movefile|addfile|delfile|listfiles|version) /path/to/project [/path/to/(file|project)]
 
             --template <string>: init -- specify the template (library|console) [default: library]
             --frameworkversion [-fxv] <string>: init -- specify the framework version (4.0|4.5|4.5.1) [default: 4.5]
@@ -76,12 +76,21 @@ project. To move the file `MyFile.fs` up by two, use:
     [lang=batch]
     <path to projekt>/projekt movefile MyProject.fsproj MyFile.fs --direction up --repeat 2
 
+#### List the order of files in a project
+
+The order of compilation is important in F# projects. This command lets you
+see the current ordering of files in the project. To see the order of files in
+`MyProject.fsproj`, use:
+
+    [lang=batch]
+    <path to projekt>/projekt listfiles MyProject.fsproj
+
 #### Reference another project
 
 Use the `reference` command:
 
     [lang=batch]
-    <path to projekt>/projekt reference MyProject.fsproj ../AnotherProject/AnotherProject.fsproj 
+    <path to projekt>/projekt reference MyProject.fsproj ../AnotherProject/AnotherProject.fsproj
 
 ## Contributing and copyright
 

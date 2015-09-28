@@ -5,9 +5,9 @@ open System.Xml.Linq
 
 [<EntryPoint>]
 let main argv =
-    let op = 
+    let op =
         match Args.parse argv with
-        | Success op -> op 
+        | Success op -> op
         | Failure msg ->
             eprintfn "%s" msg
             Exit
@@ -31,7 +31,7 @@ let main argv =
         let cur = exeDir </> "templates"
         if Directory.Exists cur then cur
         else eprintfn "Error: project template directory not found at '%s'" cur; exit 1
-    
+
     match op with
     | Init data ->
         match Template.init templatesDir data with
@@ -50,7 +50,16 @@ let main argv =
     | MoveFile data ->
         (Project.moveFile data.ProjPath data.FilePath data.Direction data.Repeat)
         |> saveOrPrintError data.ProjPath
-        
+
+    | ListFiles data ->
+        match (Project.listFiles data.ProjPath) with
+        | Success files ->
+            List.iter (fun file -> printfn "%s" file) files
+            0
+        | Failure msg ->
+            eprintfn "%s" msg
+            1
+
     | Reference { ProjPath = path; Reference = reference } ->
         Project.addReference path reference
         |> saveOrPrintError path
@@ -58,7 +67,6 @@ let main argv =
     | Version ->
         printfn "projekt %s" AssemblyVersionInformation.Version
         0
-          
-    | _ -> 
-        1
 
+    | _ ->
+        1
