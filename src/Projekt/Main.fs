@@ -54,7 +54,7 @@ let main argv =
     | ListFiles data ->
         match (Project.listFiles data.ProjPath) with
         | Success files ->
-            List.iter (fun file -> eprintfn "%s" file) files
+            List.iter (fun file -> printfn "%s" file) files
             0
         | Failure msg ->
             eprintfn "%s" msg
