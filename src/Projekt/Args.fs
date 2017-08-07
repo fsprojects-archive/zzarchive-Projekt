@@ -2,7 +2,7 @@ module Projekt.Args
 
 open Projekt.Types
 open System.IO
-open Nessos.UnionArgParser
+open Argu
 
 type private Args =
     | Template of string
@@ -45,7 +45,7 @@ let private parseDirection s =
     | ToLower "down" -> Down
     | _ -> failwith "invalid direction specified"
 
-let private parser = UnionArgParser.Create<Args>()
+let private parser = ArgumentParser.Create<Args>()
 
 let private (|Options|) (args : string list) =
     let results = parser.Parse(List.toArray args)
