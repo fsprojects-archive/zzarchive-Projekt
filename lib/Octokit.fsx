@@ -38,7 +38,7 @@ let createDraft owner project version prerelease (notes: string seq) (client : A
         data.Draft <- true
         data.Prerelease <- prerelease
         let! client' = client
-        let! draft = Async.AwaitTask <| client'.Release.Create(owner, project, data)
+        let! draft = Async.AwaitTask <| client'.Repository.Release.Create(owner, project, data)
         printfn "Created draft release id %d" draft.Id
         return { Client = client'
                  Owner = owner
@@ -52,7 +52,7 @@ let uploadFile fileName (draft : Async<Draft>) =
         let archiveContents = File.OpenRead(fi.FullName)
         let assetUpload = new ReleaseAssetUpload(fi.Name,"application/octet-stream",archiveContents,Nullable<TimeSpan>())
         let! draft' = draft
-        let! asset = Async.AwaitTask <| draft'.Client.Release.UploadAsset(draft'.DraftRelease, assetUpload)
+        let! asset = Async.AwaitTask <| draft'.Client.Repository.Release.UploadAsset(draft'.DraftRelease, assetUpload)
         printfn "Uploaded %s" asset.Name
         return draft'
     }
@@ -62,6 +62,6 @@ let releaseDraft (draft : Async<Draft>) =
         let! draft' = draft
         let update = draft'.DraftRelease.ToUpdate()
         update.Draft <- Nullable<bool>(false)
-        let! released = Async.AwaitTask <| draft'.Client.Release.Edit(draft'.Owner, draft'.Project, draft'.DraftRelease.Id, update)
+        let! released = Async.AwaitTask <| draft'.Client.Repository.Release.Edit(draft'.Owner, draft'.Project, draft'.DraftRelease.Id, update)
         printfn "Released %d on github" released.Id
     }
