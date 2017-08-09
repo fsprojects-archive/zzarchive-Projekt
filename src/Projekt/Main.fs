@@ -65,7 +65,7 @@ let main argv =
         |> saveOrPrintError path
 
     | Version ->
-        printfn "projekt %s" AssemblyVersionInformation.Version
+        printfn "projekt %s" AssemblyVersionInformation.AssemblyVersion
         0
 
     | _ ->

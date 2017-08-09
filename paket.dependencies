@@ -1,11 +1,11 @@
 source https://nuget.org/api/v2
 
+nuget Argu
 nuget FSharp.Formatting
 nuget FsUnit
-nuget NUnit 
+nuget NUnit
 nuget NUnit.Runners
 nuget FAKE
 nuget SourceLink.Fake
-nuget UnionArgParser
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx

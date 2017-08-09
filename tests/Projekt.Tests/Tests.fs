@@ -196,7 +196,7 @@ let ``addFile followed by delFile should be identity`` () =
             File.Delete tmpFile
 
 let delInput = """<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
     <AssemblyName>Test</AssemblyName>
@@ -209,18 +209,14 @@ let delInput = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 let delExpected =
-    let emptyItemGroup = if runningOnMono then "<ItemGroup></ItemGroup>" else "<ItemGroup />"
-
     """<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
     <AssemblyName>Test</AssemblyName>
     <Name>Test</Name>
   </PropertyGroup>
-    """
-    + emptyItemGroup +
-    """
+  <ItemGroup />
     </Project>
     """
 
@@ -241,7 +237,7 @@ let ``delFile should fail if not present`` () =
     | Success result -> Assert.Fail (result.ToString())
 
 let delNoneInput = """<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
     <AssemblyName>Test</AssemblyName>
@@ -255,7 +251,7 @@ let delNoneInput = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 let delNoneExpected = """<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>165a6853-05ed-4f03-a7b1-1c84d4f01bf5</ProjectGuid>
     <AssemblyName>Test</AssemblyName>
@@ -298,7 +294,6 @@ let delMultipleIGInput = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 let delMultipleIGExpected =
-    let emptyItemGroup = if runningOnMono then "<ItemGroup></ItemGroup>" else "<ItemGroup />"
     """<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
@@ -313,9 +308,7 @@ let delMultipleIGExpected =
   <ItemGroup>
     <Compile Include="Test3.fs" />
   </ItemGroup>
-    """
-    + emptyItemGroup +
-    """
+  <ItemGroup />
     </Project>
     """
 

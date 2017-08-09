@@ -2,7 +2,7 @@ module Projekt.Args
 
 open Projekt.Types
 open System.IO
-open Nessos.UnionArgParser
+open Argu
 
 type private Args =
     | Template of string
@@ -24,14 +24,14 @@ with
             | Link _ -> "addfile -- specify an optional Link attribute"
             | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
 
-let private templateArg (res : ArgParseResults<Args>) =
+let private templateArg (res : ParseResults<Args>) =
     match res.TryGetResult(<@ Template @>) with
     | Some (ToLower "console") -> Console
     | Some (ToLower "library") -> Library
     | None -> Library
     | _ -> failwith "invalid template argument specified"
 
-let private frameworkVersionArg (res : ArgParseResults<Args>) =
+let private frameworkVersionArg (res : ParseResults<Args>) =
     match res.TryGetResult(<@ FrameworkVersion @>) with
     | Some "4.0" -> V4_0
     | Some "4.5" -> V4_5
@@ -45,7 +45,7 @@ let private parseDirection s =
     | ToLower "down" -> Down
     | _ -> failwith "invalid direction specified"
 
-let private parser = UnionArgParser.Create<Args>()
+let private parser = ArgumentParser.Create<Args>()
 
 let private (|Options|) (args : string list) =
     let results = parser.Parse(List.toArray args)
@@ -63,7 +63,7 @@ let parse (ToList args) : Result<Operation> =
     try
         match args with
         | [] ->
-            parser.Usage commandUsage
+            parser.PrintUsage commandUsage
             |> Failure
 
         | ToLower "version" :: _ ->
@@ -107,9 +107,9 @@ let parse (ToList args) : Result<Operation> =
         | [ToLower "reference"; FullPath project; FullPath reference] ->
             Reference { ProjPath = project; Reference = reference } |> Success
 
-        | _ -> Failure (parser.Usage (sprintf "Error: '%s' is not a recognized command or received incorrect arguments.\n\n%s" args.Head commandUsage))
+        | _ -> Failure (parser.PrintUsage (sprintf "Error: '%s' is not a recognized command or received incorrect arguments.\n\n%s" args.Head commandUsage))
     with
     | :? System.ArgumentException as e ->
             let lines = e.Message.Split([|'\n'|])
-            let msg = parser.Usage (sprintf "%s\n\n%s" lines.[0] commandUsage)
+            let msg = parser.PrintUsage (sprintf "%s\n\n%s" lines.[0] commandUsage)
             Failure msg
