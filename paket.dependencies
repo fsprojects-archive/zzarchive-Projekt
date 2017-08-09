@@ -1,6 +1,6 @@
 source https://nuget.org/api/v2
 
-nuget Argu
+nuget Argu 2.1
 nuget FSharp.Formatting
 nuget FsUnit
 nuget NUnit 

@@ -24,14 +24,14 @@ with
             | Link _ -> "addfile -- specify an optional Link attribute"
             | Compile _ -> "addfile -- should the file be compiled or not  [default: true]"
 
-let private templateArg (res : ArgParseResults<Args>) =
+let private templateArg (res : ParseResults<Args>) =
     match res.TryGetResult(<@ Template @>) with
     | Some (ToLower "console") -> Console
     | Some (ToLower "library") -> Library
     | None -> Library
     | _ -> failwith "invalid template argument specified"
 
-let private frameworkVersionArg (res : ArgParseResults<Args>) =
+let private frameworkVersionArg (res : ParseResults<Args>) =
     match res.TryGetResult(<@ FrameworkVersion @>) with
     | Some "4.0" -> V4_0
     | Some "4.5" -> V4_5
