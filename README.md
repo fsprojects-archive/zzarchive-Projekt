@@ -1,6 +1,8 @@
 # Projekt
 A utility for editing fsharp project files.
 
+Note that this repository is dormant. We suggest that you consider using [Forge](https://github.com/fsharp-editing/Forge) instead.
+
 ## Quick contributing guide
 
  - Fork and clone locally.
